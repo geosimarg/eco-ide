@@ -1,15 +1,33 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useWorkspaceStore } from '@/stores/workspace';
 import { useI18nStore } from '@/stores/i18n';
 import { logger } from '@/utils/logger';
+import FileIcon from '@/components/common/FileIcon.vue';
 
 const workspaceStore = useWorkspaceStore();
 const i18n = useI18nStore();
 
 const searchQuery = ref('');
+const searchExclude = ref('');
 const searchResults = ref<Array<{ file: string; line: number; content: string }>>([]);
 const isSearching = ref(false);
+
+const groupedResults = computed(() => {
+  const groups: Record<string, Array<{ line: number; content: string }>> = {};
+  searchResults.value.forEach(result => {
+    if (!groups[result.file]) {
+      groups[result.file] = [];
+    }
+    groups[result.file].push({
+      line: result.line,
+      content: result.content
+    });
+  });
+  return groups;
+});
+
+const resultCount = computed(() => searchResults.value.length);
 
 async function performSearch() {
   if (!searchQuery.value.trim()) {
@@ -27,7 +45,8 @@ async function performSearch() {
     const { invoke } = await import('@tauri-apps/api/core');
     searchResults.value = await invoke('search_files', {
       directory: workspaceStore.workspacePath,
-      query: searchQuery.value
+      query: searchQuery.value,
+      exclude: searchExclude.value.trim() || null,
     });
   } catch (error) {
     logger.error('Erro na busca:', error);
@@ -37,22 +56,29 @@ async function performSearch() {
   }
 }
 
-async function handleResultClick(result: { file: string; line: number; content: string }) {
+/** Coluna exata da ocorrência do termo de busca na linha (1-based). */
+function getMatchColumn(lineContent: string, query: string): number {
+  const q = query.trim();
+  if (!q) return 1;
+  const idx = lineContent.toLowerCase().indexOf(q.toLowerCase());
+  return idx >= 0 ? idx + 1 : 1;
+}
+
+async function handleResultDblClick(file: string, line: number, lineContent: string) {
   try {
     const { invoke } = await import('@tauri-apps/api/core');
-    const content = await invoke<string>('read_file', { path: result.file });
+    const content = await invoke<string>('read_file', { path: file });
 
-    const fileName = result.file.split(/[/\\]/).pop() || result.file;
+    const fileName = file.split(/[/\\]/).pop() || file;
+    const column = getMatchColumn(lineContent, searchQuery.value);
 
     workspaceStore.openFile({
       name: fileName,
-      path: result.file,
-      content: content
+      path: file,
+      content: content,
+      initialLine: line,
+      initialColumn: column,
     });
-
-    // TODO: Implementar rolagem para a linha específica quando o editor suportar
-    logger.log(`Abrindo arquivo em ${result.file}:${result.line}`);
-
   } catch (e) {
     logger.error('Erro ao abrir arquivo do resultado:', e);
   }
@@ -67,6 +93,10 @@ function getRelativePath(fullPath: string) {
   }
   return fullPath;
 }
+
+function getFileName(path: string) {
+  return path.split(/[/\\]/).pop() || path;
+}
 </script>
 
 <template>
@@ -80,20 +110,36 @@ function getRelativePath(fullPath: string) {
       <input v-model="searchQuery" type="text" class="search-input" :placeholder="i18n.t('search.placeholder')"
         @keyup.enter="performSearch" />
     </div>
+    <div class="exclude-input-wrapper">
+      <input v-model="searchExclude" type="text" class="search-input exclude-input"
+        :placeholder="i18n.t('search.exclude_placeholder')" @keyup.enter="performSearch" />
+    </div>
 
     <div v-if="isSearching" class="loading">
       {{ i18n.t('search.loading') }}
     </div>
 
-    <div v-else-if="searchResults.length > 0" class="results">
+    <div v-else-if="resultCount > 0" class="results">
       <div class="results-count">
-        {{ i18n.t('search.results_found', { count: searchResults.length }) }}
+        {{ i18n.t('search.results_found', { count: resultCount }) }}
       </div>
-      <div v-for="(result, index) in searchResults" :key="index" class="result-item" @click="handleResultClick(result)">
-        <div class="result-file" :title="result.file">{{ getRelativePath(result.file) }}</div>
-        <div class="result-line">
-          <span class="line-number">{{ result.line }}:</span>
-          <span class="line-content">{{ result.content }}</span>
+
+      <div v-for="(matches, file) in groupedResults" :key="file" class="file-group">
+        <div class="file-header" :title="String(file)">
+          <FileIcon :name="getFileName(String(file))" class="file-icon" />
+          <span class="file-name">{{ getFileName(String(file)) }}</span>
+          <span class="file-path">{{ getRelativePath(String(file)) }}</span>
+          <span class="match-badge">{{ matches.length }}</span>
+        </div>
+
+        <div class="file-matches">
+          <div v-for="(match, index) in matches" :key="index" class="match-item"
+            @dblclick="handleResultDblClick(String(file), match.line, match.content)">
+            <div class="match-line">
+              <span class="line-number">{{ match.line }}:</span>
+              <span class="line-content">{{ match.content }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -112,7 +158,8 @@ function getRelativePath(fullPath: string) {
   padding: var(--space-sm);
 }
 
-.search-input-wrapper {
+.search-input-wrapper,
+.exclude-input-wrapper {
   position: relative;
   margin-bottom: var(--space-sm);
 }
@@ -140,6 +187,11 @@ function getRelativePath(fullPath: string) {
   border-color: var(--accent-primary);
 }
 
+.exclude-input {
+  padding-left: var(--space-sm);
+  font-size: var(--font-size-xs);
+}
+
 .loading,
 .no-results {
   padding: var(--space-md);
@@ -153,7 +205,7 @@ function getRelativePath(fullPath: string) {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
 }
 
 .results-count {
@@ -163,28 +215,67 @@ function getRelativePath(fullPath: string) {
   margin-bottom: var(--space-xs);
 }
 
-.result-item {
-  padding: var(--space-sm);
+.file-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.file-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--bg-secondary);
   border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-  border: 1px solid transparent;
-}
-
-.result-item:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-subtle);
-}
-
-.result-file {
   font-size: var(--font-size-xs);
   font-weight: 600;
-  color: var(--accent-primary);
-  margin-bottom: 2px;
-  word-break: break-all;
+  color: var(--text-primary);
+  position: sticky;
+  top: 0;
 }
 
-.result-line {
+.file-name {
+  color: var(--text-primary);
+}
+
+.file-path {
+  color: var(--text-tertiary);
+  font-weight: 400;
+  font-size: 10px;
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 50%;
+}
+
+.match-badge {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  padding: 0 6px;
+  font-size: 10px;
+}
+
+.file-matches {
+  display: flex;
+  flex-direction: column;
+}
+
+.match-item {
+  padding: 4px var(--space-sm) 4px 28px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border-left: 2px solid transparent;
+}
+
+.match-item:hover {
+  background: var(--bg-hover);
+  border-left-color: var(--accent-primary);
+}
+
+.match-line {
   display: flex;
   gap: var(--space-sm);
   font-size: var(--font-size-xs);

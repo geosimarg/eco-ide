@@ -60,6 +60,7 @@
     },
     "search": {
         "placeholder": "Buscar en archivos...",
+        "exclude_placeholder": "Excluir (ej.: node_modules, dist, *.log)",
         "loading": "Buscando...",
         "no_results": "Ningún resultado encontrado",
         "results_found": "{count} resultados encontrados",

@@ -153,47 +153,108 @@ pub struct SearchResult {
     pub content: String,
 }
 
-/// Busca texto em arquivos de um diretório
+fn parse_exclude_patterns(exclude: Option<&str>) -> Vec<String> {
+    let Some(s) = exclude else { return vec![] };
+    s.split(|c| c == ',' || c == '\n')
+        .map(|p| p.trim().to_string())
+        .filter(|p| !p.is_empty())
+        .collect()
+}
+
+fn relative_path(path: &Path, base: &Path) -> String {
+    path.strip_prefix(base)
+        .unwrap_or(path)
+        .to_string_lossy()
+        .replace('\\', "/")
+        .trim_start_matches('/')
+        .to_string()
+}
+
+fn path_matches_exclude(rel_path: &str, patterns: &[String]) -> bool {
+    use std::path::Path as StdPath;
+    let path_as_path = StdPath::new(rel_path);
+    let file_name = path_as_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("");
+
+    for pattern in patterns {
+        let pattern = pattern.trim();
+        if pattern.is_empty() {
+            continue;
+        }
+
+        let glob_pattern = if pattern.contains('*') || pattern.contains('/') {
+            pattern.to_string()
+        } else {
+            format!("**/{}/**", pattern)
+        };
+        if let Ok(g) = glob::Pattern::new(&glob_pattern) {
+            if g.matches(rel_path) {
+                return true;
+            }
+        }
+
+        let glob_simple = if pattern.contains('*') || pattern.contains('/') {
+            pattern.to_string()
+        } else {
+            format!("**/{}", pattern)
+        };
+        if let Ok(g) = glob::Pattern::new(&glob_simple) {
+            if g.matches(rel_path) || g.matches(file_name) {
+                return true;
+            }
+        }
+    }
+    false
+}
+
 #[tauri::command]
 fn search_files(
     directory: String,
     query: String,
+    exclude: Option<String>,
 ) -> Result<Vec<SearchResult>, AppError> {
     let mut results = Vec::new();
     let query_lower = query.to_lowercase();
-    
+    let exclude_patterns = parse_exclude_patterns(exclude.as_deref());
+    let directory_path = Path::new(&directory);
+
     for entry in WalkDir::new(&directory)
         .into_iter()
         .filter_entry(|e| {
             let name = e.file_name().to_string_lossy();
-            !name.starts_with('.') && name != "node_modules" && name != "target"
+            if name.starts_with('.') || name == "node_modules" || name == "target" {
+                return false;
+            }
+            if exclude_patterns.is_empty() {
+                return true;
+            }
+            let rel = relative_path(e.path(), directory_path);
+            !path_matches_exclude(&rel, &exclude_patterns)
         })
         .filter_map(|e| e.ok())
     {
         if entry.file_type().is_file() {
-            // Limitar a arquivos de texto
             let path = entry.path();
-            if let Some(ext) = path.extension() {
-                let ext_str = ext.to_string_lossy().to_lowercase();
-                let text_extensions = ["rs", "ts", "js", "vue", "json", "md", "toml", "yaml", "yml", "html", "css", "py"];
-                
-                if text_extensions.contains(&ext_str.as_str()) {
-                    if let Ok(content) = fs::read_to_string(path) {
-                        for (line_num, line) in content.lines().enumerate() {
-                            if line.to_lowercase().contains(&query_lower) {
-                                results.push(SearchResult {
-                                    file: path.to_string_lossy().to_string(),
-                                    line: line_num + 1,
-                                    content: line.trim().to_string(),
-                                });
-                            }
-                        }
+            let rel = relative_path(path, directory_path);
+            if !exclude_patterns.is_empty() && path_matches_exclude(&rel, &exclude_patterns) {
+                continue;
+            }
+            if let Ok(content) = fs::read_to_string(path) {
+                for (line_num, line) in content.lines().enumerate() {
+                    if line.to_lowercase().contains(&query_lower) {
+                        results.push(SearchResult {
+                            file: path.to_string_lossy().to_string(),
+                            line: line_num + 1,
+                            content: line.trim().to_string(),
+                        });
                     }
                 }
             }
         }
     }
-    
+
     Ok(results)
 }
 

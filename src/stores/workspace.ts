@@ -42,7 +42,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     function setWorkspace(path: string, name: string) {
         workspacePath.value = path;
         workspaceName.value = name;
-        // Limpar arquivos abertos ao mudar de workspace
+
         openFiles.value = [];
         activeFileId.value = null;
     }
@@ -51,10 +51,15 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         files.value = entries;
     }
 
-    function openFile(entry: { name: string; path: string; content: string }) {
+    function openFile(entry: { name: string; path: string; content: string; initialLine?: number; initialColumn?: number }) {
         // Verificar se já está aberto
         const existing = openFiles.value.find(f => f.path === entry.path);
         if (existing) {
+            // Se foi solicitado abrir em linha específica, atualiza
+            if (entry.initialLine !== undefined) {
+                existing.initialLine = entry.initialLine;
+                existing.initialColumn = entry.initialColumn;
+            }
             activeFileId.value = existing.id;
             return existing.id;
         }
@@ -70,6 +75,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
             content: entry.content,
             modified: false,
             language: languageOverride || getLanguageFromPath(entry.path),
+            initialLine: entry.initialLine,
+            initialColumn: entry.initialColumn,
         };
 
         openFiles.value.push(newFile);
@@ -198,6 +205,14 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         }
     }
 
+    function clearInitialPosition(id: string) {
+        const file = openFiles.value.find(f => f.id === id);
+        if (file) {
+            file.initialLine = undefined;
+            file.initialColumn = undefined;
+        }
+    }
+
     async function closeFileWithConfirmation(id: string) {
         const file = openFiles.value.find(f => f.id === id);
         if (!file) return;
@@ -269,6 +284,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         createNewFile,
         saveFile,
         setFileLanguage,
+        clearInitialPosition,
         requestCloseConfirmation,
         handleModalChoice,
         closeFileWithConfirmation,
