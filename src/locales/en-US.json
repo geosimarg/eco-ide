@@ -48,8 +48,16 @@
     },
     "explorer": {
         "new_file": "New File",
+        "new_folder": "New Folder",
         "open_folder": "Open Folder",
         "title": "Explorer"
+    },
+    "new_folder_modal": {
+        "title": "New Folder",
+        "create_in": "Create in:",
+        "placeholder": "Folder name",
+        "cancel": "Cancel",
+        "create": "Create"
     },
     "new_file_modal": {
         "title": "New File",

@@ -5,6 +5,7 @@ import { useConfigStore } from '@/stores/config';
 import { useI18nStore } from '@/stores/i18n';
 import { logger } from '@/utils/logger';
 import NewFileModal from '@/components/modals/NewFileModal.vue';
+import NewFolderModal from '@/components/modals/NewFolderModal.vue';
 import FileIcon from '@/components/common/FileIcon.vue';
 
 const workspaceStore = useWorkspaceStore();
@@ -14,9 +15,11 @@ const i18n = useI18nStore();
 const files = computed(() => workspaceStore.files);
 const workspaceName = computed(() => workspaceStore.workspaceName);
 
-// Estado do modal de novo arquivo
+// Estado dos modais
 const showNewFileModal = ref(false);
 const newFileParentPath = ref('');
+const showNewFolderModal = ref(false);
+const newFolderParentPath = ref('');
 
 const newFileParentPathRelative = computed(() => {
   if (!workspaceStore.workspacePath || !newFileParentPath.value) return '';
@@ -28,6 +31,17 @@ const newFileParentPathRelative = computed(() => {
     return rel || './';
   }
   return newFileParentPath.value;
+});
+
+const newFolderParentPathRelative = computed(() => {
+  if (!workspaceStore.workspacePath || !newFolderParentPath.value) return '';
+  if (newFolderParentPath.value === workspaceStore.workspacePath) return './';
+  if (newFolderParentPath.value.startsWith(workspaceStore.workspacePath)) {
+    let rel = newFolderParentPath.value.slice(workspaceStore.workspacePath.length);
+    rel = rel.replace(/^[/\\]+/, '');
+    return rel || './';
+  }
+  return newFolderParentPath.value;
 });
 
 async function openFolder() {
@@ -70,6 +84,11 @@ async function handleFileClick(entry: FileEntry) {
 }
 
 
+
+function handleCreateFolder(parentPath: string) {
+  newFolderParentPath.value = parentPath;
+  showNewFolderModal.value = true;
+}
 
 function handleCreateFile(parentPath: string) {
   newFileParentPath.value = parentPath;
@@ -121,6 +140,44 @@ async function handleModalCreate(fileName: string) {
   }
 }
 
+async function handleModalCreateFolder(folderName: string) {
+  showNewFolderModal.value = false;
+  const parentPath = newFolderParentPath.value;
+
+  const separator = navigator.userAgent.includes('Windows') ? '\\' : '/';
+  const fullPath = parentPath.endsWith(separator)
+    ? `${parentPath}${folderName}`
+    : `${parentPath}${separator}${folderName}`;
+
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    await invoke('create_directory', { path: fullPath });
+
+    const newEntry: FileEntry = {
+      name: folderName,
+      path: fullPath,
+      isDirectory: true,
+      children: [],
+      expanded: false
+    };
+
+    if (parentPath === workspaceStore.workspacePath) {
+      workspaceStore.files.push(newEntry);
+      sortFiles(workspaceStore.files);
+    } else {
+      const parent = findEntry(workspaceStore.files, parentPath);
+      if (parent && parent.children) {
+        parent.children.push(newEntry);
+        sortFiles(parent.children);
+        parent.expanded = true;
+      }
+    }
+  } catch (e) {
+    logger.error('Erro ao criar pasta:', e);
+    alert('Erro ao criar pasta: ' + e);
+  }
+}
+
 function findEntry(entries: FileEntry[], path: string): FileEntry | null {
   for (const entry of entries) {
     if (entry.path === path) return entry;
@@ -160,15 +217,25 @@ function sortFiles(entries: FileEntry[]) {
     <div v-else class="file-tree">
       <div class="tree-header" id="tree-header">
         <span class="tree-title">{{ workspaceName }}</span>
-        <button class="icon-btn" @click="handleCreateFile(workspaceStore.workspacePath!)"
-          :title="i18n.t('explorer.new_file')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="12" y1="18" x2="12" y2="12" />
-            <line x1="9" y1="15" x2="15" y2="15" />
-          </svg>
-        </button>
+        <div class="tree-header-actions">
+          <button class="icon-btn" @click="handleCreateFolder(workspaceStore.workspacePath!)"
+            :title="i18n.t('explorer.new_folder')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+              <line x1="12" y1="11" x2="12" y2="17" />
+              <line x1="9" y1="14" x2="15" y2="14" />
+            </svg>
+          </button>
+          <button class="icon-btn" @click="handleCreateFile(workspaceStore.workspacePath!)"
+            :title="i18n.t('explorer.new_file')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="12" y1="18" x2="12" y2="12" />
+              <line x1="9" y1="15" x2="15" y2="15" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="tree-content">
@@ -212,6 +279,8 @@ function sortFiles(entries: FileEntry[]) {
       </div>
     </div>
 
+    <NewFolderModal :visible="showNewFolderModal" :parent-path="newFolderParentPathRelative"
+      @create="handleModalCreateFolder" @cancel="showNewFolderModal = false" />
     <NewFileModal :visible="showNewFileModal" :parent-path="newFileParentPathRelative" @create="handleModalCreate"
       @cancel="showNewFileModal = false" />
   </div>
@@ -270,6 +339,12 @@ function sortFiles(entries: FileEntry[]) {
   justify-content: space-between;
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--border-subtle);
+}
+
+.tree-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .tree-title {

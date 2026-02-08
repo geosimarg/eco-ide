@@ -48,8 +48,16 @@
     },
     "explorer": {
         "new_file": "Novo Arquivo",
+        "new_folder": "Nova Pasta",
         "open_folder": "Abrir Pasta",
         "title": "Explorador"
+    },
+    "new_folder_modal": {
+        "title": "Nova Pasta",
+        "create_in": "Criar em:",
+        "placeholder": "Nome da pasta",
+        "cancel": "Cancelar",
+        "create": "Criar"
     },
     "new_file_modal": {
         "title": "Novo Arquivo",

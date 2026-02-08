@@ -48,8 +48,16 @@
     },
     "explorer": {
         "new_file": "Nuevo Archivo",
+        "new_folder": "Nueva Carpeta",
         "open_folder": "Abrir Carpeta",
         "title": "Explorador"
+    },
+    "new_folder_modal": {
+        "title": "Nueva Carpeta",
+        "create_in": "Crear en:",
+        "placeholder": "Nombre de la carpeta",
+        "cancel": "Cancelar",
+        "create": "Crear"
     },
     "new_file_modal": {
         "title": "Nuevo Archivo",
