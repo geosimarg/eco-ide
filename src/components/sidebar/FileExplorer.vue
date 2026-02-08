@@ -5,6 +5,7 @@ import { useConfigStore } from '@/stores/config';
 import { useI18nStore } from '@/stores/i18n';
 import { logger } from '@/utils/logger';
 import NewFileModal from '@/components/modals/NewFileModal.vue';
+import FileIcon from '@/components/common/FileIcon.vue';
 
 const workspaceStore = useWorkspaceStore();
 const configStore = useConfigStore();
@@ -47,15 +48,7 @@ async function openFolder() {
   }
 }
 
-async function loadFiles(path: string) {
-  try {
-    const { invoke } = await import('@tauri-apps/api/core');
-    const entries = await invoke<FileEntry[]>('list_directory', { path });
-    workspaceStore.setFiles(entries);
-  } catch (error) {
-    logger.error('Erro ao listar diretório:', error);
-  }
-}
+
 
 async function handleFileClick(entry: FileEntry) {
   if (entry.isDirectory) {
@@ -76,25 +69,7 @@ async function handleFileClick(entry: FileEntry) {
   }
 }
 
-function getFileIcon(entry: FileEntry): string {
-  if (entry.isDirectory) {
-    return entry.expanded ? '📂' : '📁';
-  }
-  const ext = entry.name.split('.').pop() || '';
-  const icons: Record<string, string> = {
-    ts: '🟦',
-    js: '🟨',
-    vue: '💚',
-    rs: '🦀',
-    py: '🐍',
-    json: '📋',
-    md: '📝',
-    css: '🎨',
-    html: '🌐',
-    toml: '⚙️',
-  };
-  return icons[ext] || '📄';
-}
+
 
 function handleCreateFile(parentPath: string) {
   newFileParentPath.value = parentPath;
@@ -199,7 +174,8 @@ function sortFiles(entries: FileEntry[]) {
       <div class="tree-content">
         <template v-for="entry in files" :key="entry.path">
           <div class="tree-item" :class="{ directory: entry.isDirectory }" @click="handleFileClick(entry)">
-            <span class="item-icon">{{ getFileIcon(entry) }}</span>
+            <FileIcon :name="entry.name" :is-directory="entry.isDirectory" :expanded="entry.expanded"
+              class="item-icon" />
             <span class="item-name">{{ entry.name }}</span>
 
             <button v-if="entry.isDirectory" class="item-action-btn" @click.stop="handleCreateFile(entry.path)"
@@ -217,7 +193,8 @@ function sortFiles(entries: FileEntry[]) {
           <template v-if="entry.isDirectory && entry.expanded && entry.children">
             <div v-for="child in entry.children" :key="child.path" class="tree-item nested"
               :class="{ directory: child.isDirectory }" @click="handleFileClick(child)">
-              <span class="item-icon">{{ getFileIcon(child) }}</span>
+              <FileIcon :name="child.name" :is-directory="child.isDirectory" :expanded="child.expanded"
+                class="item-icon" />
               <span class="item-name">{{ child.name }}</span>
 
               <button v-if="child.isDirectory" class="item-action-btn" @click.stop="handleCreateFile(child.path)"

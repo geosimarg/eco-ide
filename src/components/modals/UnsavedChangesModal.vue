@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { OpenFile } from '@/stores/workspace';
+import FileIcon from '@/components/common/FileIcon.vue';
 
 const props = defineProps<{
   files: OpenFile[];
@@ -40,7 +41,7 @@ const message = computed(() => {
           <p>{{ message }}</p>
           <ul v-if="files.length > 1" class="file-list">
             <li v-for="file in files" :key="file.id">
-              <span class="file-icon">📄</span>
+              <FileIcon :name="file.name" class="file-icon" />
               {{ file.name }}
             </li>
           </ul>
@@ -116,6 +117,12 @@ const message = computed(() => {
   align-items: center;
   gap: var(--space-sm);
   font-size: var(--font-size-sm);
+}
+
+.file-list .file-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .file-list li:nth-child(even) {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view';
-import { EditorState, Compartment } from '@codemirror/state';
+import { EditorState, Compartment, EditorSelection } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { bracketMatching, foldGutter, indentOnInput, syntaxHighlighting } from '@codemirror/language';
 import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete';
@@ -173,7 +173,7 @@ function getLanguageExtension(filenameOrLang: string, languageOverride?: string)
   if (languageOverride && languageOverride !== 'Plain Text') {
     return getLanguageExtensionByName(languageOverride);
   }
-  
+
   // Caso contrário, detectar pela extensão do arquivo
   const ext = filenameOrLang.split('.').pop()?.toLowerCase();
   switch (ext) {
@@ -204,10 +204,10 @@ function getLanguageExtension(filenameOrLang: string, languageOverride?: string)
 
 async function saveFile() {
   if (!props.file) return;
-  
+
   try {
     let filePath = props.file.path;
-    
+
     // Se não tem caminho, abrir diálogo "Salvar Como"
     if (!filePath) {
       const { save } = await import('@tauri-apps/plugin-dialog');
@@ -223,16 +223,16 @@ async function saveFile() {
           { name: 'Python', extensions: ['py'] },
         ]
       });
-      
+
       if (!selected) return; // Usuário cancelou
       filePath = selected;
     }
-    
+
     const { invoke } = await import('@tauri-apps/api/core');
     await invoke('write_file', { path: filePath, content: props.file.content });
-    
+
     workspaceStore.saveFile(props.file.id, filePath, true);
-    
+
     logger.log('Arquivo salvo:', filePath);
   } catch (error) {
     logger.error('Erro ao salvar arquivo:', error);
@@ -290,6 +290,39 @@ function createEditor() {
     state,
     parent: editorContainer.value,
   });
+
+  // Se houver linha/coluna inicial (ex.: resultado da busca), mover cursor e scrollar
+  if (props.file.initialLine) {
+    scheduleApplyInitialPosition();
+  }
+}
+
+function applyInitialPosition() {
+  if (!editorView || !props.file.initialLine) return;
+
+  const line = props.file.initialLine;
+  const col = props.file.initialColumn || 1;
+  const doc = editorView.state.doc;
+
+  if (line > doc.lines) return;
+
+  const lineInfo = doc.line(line);
+  const pos = Math.min(lineInfo.from + col - 1, lineInfo.to);
+  const selection = EditorSelection.cursor(pos);
+
+  editorView.dispatch({
+    selection,
+    effects: EditorView.scrollIntoView(pos, { y: 'center' }),
+  });
+  editorView.focus();
+
+  workspaceStore.clearInitialPosition(props.file.id);
+}
+
+function scheduleApplyInitialPosition() {
+  setTimeout(() => {
+    applyInitialPosition();
+  }, 50);
 }
 
 function destroyEditor() {
@@ -303,6 +336,16 @@ watch(() => props.file.id, () => {
   destroyEditor();
   createEditor();
 });
+
+// Quando o arquivo já está aberto e recebe nova posição (ex.: outro resultado da busca)
+watch(
+  () => [props.file.initialLine, props.file.initialColumn],
+  ([line, col]) => {
+    if (line !== undefined && editorView) {
+      scheduleApplyInitialPosition();
+    }
+  },
+);
 
 // Quando a linguagem muda (override do usuário), reconfigura o compartment
 watch(() => props.file.language, (newLang) => {

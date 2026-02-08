@@ -10,6 +10,8 @@ export interface OpenFile {
     content: string;
     modified: boolean;
     language: string;
+    initialLine?: number;
+    initialColumn?: number;
 }
 
 export interface FileEntry {

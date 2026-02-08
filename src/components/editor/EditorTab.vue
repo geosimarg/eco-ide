@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { type OpenFile, useWorkspaceStore } from '@/stores/workspace';
-import { computed } from 'vue';
+import FileIcon from '@/components/common/FileIcon.vue';
 
 const props = defineProps<{
   file: OpenFile;
@@ -13,22 +13,6 @@ const emit = defineEmits<{
 }>();
 
 const workspaceStore = useWorkspaceStore();
-
-const icon = computed(() => {
-  const ext = props.file.name.split('.').pop() || '';
-  const icons: Record<string, string> = {
-    ts: '🟦',
-    js: '🟨',
-    vue: '💚',
-    rs: '🦀',
-    py: '🐍',
-    json: '📋',
-    md: '📝',
-    css: '🎨',
-    html: '🌐',
-  };
-  return icons[ext] || '📄';
-});
 
 async function handleClose(e: MouseEvent) {
   e.stopPropagation();
@@ -43,7 +27,7 @@ async function handleClose(e: MouseEvent) {
     :class="{ active }"
     @click="emit('select')"
   >
-    <span class="tab-icon">{{ icon }}</span>
+    <FileIcon :name="props.file.name" class="tab-icon" />
     <span class="tab-name">{{ file.name }}</span>
     <span v-if="file.modified" class="modified-dot" title="Não salvo"></span>
     <button class="close-btn" @click="handleClose" title="Fechar">
@@ -80,7 +64,9 @@ async function handleClose(e: MouseEvent) {
 }
 
 .tab-icon {
-  font-size: 14px;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
