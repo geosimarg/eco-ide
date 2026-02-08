@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
-const editorFolder = '.editor';
-const configFile = 'config.json';
+const editorFolder = '.eco';
+const configFile = 'workspace.json';
 
 export interface WorkspaceConfig {
     languageOverrides: Record<string, string>; // path -> language
@@ -22,27 +22,33 @@ export const useConfigStore = defineStore('config', () => {
             const { invoke } = await import('@tauri-apps/api/core');
             const content = await invoke<string>('read_file', { path: configPath });
             config.value = JSON.parse(content);
-        } catch {
+            console.log('Configuração carregada de:', configPath);
+        } catch (e) {
+            console.log('Nenhuma configuração encontrada ou erro ao ler:', e);
             config.value = { languageOverrides: {} };
+            await saveConfig();
         }
     }
 
     async function saveConfig() {
         if (!workspacePath.value) return;
 
-        const configDir = `${workspacePath.value}/.editor`;
-        const configPath = `${configDir}/config.json`;
+        const configDir = `${workspacePath.value}/${editorFolder}`;
+        const configPath = `${configDir}/${configFile}`;
 
         try {
             const { invoke } = await import('@tauri-apps/api/core');
             try {
                 await invoke('create_directory', { path: configDir });
-            } catch {
+            } catch (e) {
+                console.error('Erro ao criar diretório de config:', e);
             }
+
             await invoke('write_file', {
                 path: configPath,
                 content: JSON.stringify(config.value, null, 2)
             });
+            console.log('Configuração salva em:', configPath);
         } catch (error) {
             console.error('Erro ao salvar config:', error);
         }

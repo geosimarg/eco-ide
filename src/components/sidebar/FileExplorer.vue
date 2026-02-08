@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useWorkspaceStore, type FileEntry } from '@/stores/workspace';
+import { useConfigStore } from '@/stores/config';
 
 const workspaceStore = useWorkspaceStore();
+const configStore = useConfigStore();
 
 const files = computed(() => workspaceStore.files);
 const workspaceName = computed(() => workspaceStore.workspaceName);
@@ -17,9 +19,8 @@ async function openFolder() {
     });
 
     if (selected && typeof selected === 'string') {
-      const name = selected.split('/').pop() || selected;
-      workspaceStore.setWorkspace(selected, name);
-      await loadFiles(selected);
+      await workspaceStore.openFolder(selected);
+      await configStore.loadConfig(selected);
     }
   } catch (error) {
     console.error('Erro ao abrir pasta:', error);

@@ -3,8 +3,10 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { open as shellOpen } from '@tauri-apps/plugin-shell';
 import { invoke } from '@tauri-apps/api/core';
 import { useWorkspaceStore } from '@/stores/workspace';
+import { useConfigStore } from '@/stores/config';
 
 const workspaceStore = useWorkspaceStore();
+const configStore = useConfigStore();
 
 async function handleOpenFolder() {
   try {
@@ -16,6 +18,7 @@ async function handleOpenFolder() {
     
     if (selected && typeof selected === 'string') {
       await workspaceStore.openFolder(selected);
+      await configStore.loadConfig(selected);
     }
   } catch (error) {
     console.error('Erro ao abrir pasta:', error);

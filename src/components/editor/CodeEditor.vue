@@ -227,11 +227,9 @@ async function saveFile() {
       filePath = selected;
     }
     
-    // Salvar o arquivo usando o comando Tauri
     const { invoke } = await import('@tauri-apps/api/core');
     await invoke('write_file', { path: filePath, content: props.file.content });
     
-    // Atualizar o store - manter linguagem se usuário fez override
     workspaceStore.saveFile(props.file.id, filePath, true);
     
     console.log('Arquivo salvo:', filePath);
@@ -300,7 +298,6 @@ function destroyEditor() {
   }
 }
 
-// Quando o arquivo muda, atualizar editor
 watch(() => props.file.id, () => {
   destroyEditor();
   createEditor();

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { useConfigStore } from './config';
 
 export interface OpenFile {
     id: string;
@@ -57,6 +58,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
             return existing.id;
         }
 
+        const configStore = useConfigStore();
+        const languageOverride = configStore.getLanguageForFile(entry.path);
+
         // Criar novo arquivo aberto
         const newFile: OpenFile = {
             id: crypto.randomUUID(),
@@ -64,7 +68,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
             path: entry.path,
             content: entry.content,
             modified: false,
-            language: getLanguageFromPath(entry.path),
+            language: languageOverride || getLanguageFromPath(entry.path),
         };
 
         openFiles.value.push(newFile);
