@@ -165,11 +165,78 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         }
     }
 
+    // Modal de confirmação
+    const showUnsavedChangesModal = ref(false);
+    const unsavedFilesForModal = ref<OpenFile[]>([]);
+    let resolveModalPromise: ((choice: 'save' | 'discard' | 'cancel') => void) | null = null;
+
+    function requestCloseConfirmation(files: OpenFile[]): Promise<'save' | 'discard' | 'cancel'> {
+        unsavedFilesForModal.value = files;
+        showUnsavedChangesModal.value = true;
+        return new Promise((resolve) => {
+            resolveModalPromise = resolve;
+        });
+    }
+
+    function handleModalChoice(choice: 'save' | 'discard' | 'cancel') {
+        showUnsavedChangesModal.value = false;
+        if (resolveModalPromise) {
+            resolveModalPromise(choice);
+            resolveModalPromise = null;
+        }
+    }
+
     function setFileLanguage(id: string, language: string) {
         const file = openFiles.value.find(f => f.id === id);
         if (file) {
             file.language = language;
         }
+    }
+
+    async function closeFileWithConfirmation(id: string) {
+        const file = openFiles.value.find(f => f.id === id);
+        if (!file) return;
+
+        if (file.modified) {
+            const choice = await requestCloseConfirmation([file]);
+            if (choice === 'cancel') return;
+            if (choice === 'save') {
+                if (file.path) {
+                    await saveFile(file.id, file.path, true);
+                    const { invoke } = await import('@tauri-apps/api/core');
+                    await invoke('write_file', { path: file.path, content: file.content });
+                }
+            }
+            if (choice === 'discard' || (choice === 'save' && file.path)) {
+                closeFile(id);
+            }
+            return choice;
+        } else {
+            closeFile(id);
+            return 'discard';
+        }
+    }
+
+    async function closeWindowWithConfirmation(): Promise<boolean> {
+        const modifiedFiles = openFiles.value.filter(f => f.modified);
+        if (modifiedFiles.length === 0) return true;
+
+        const choice = await requestCloseConfirmation(modifiedFiles);
+        if (choice === 'cancel') return false;
+
+        if (choice === 'save') {
+            const { invoke } = await import('@tauri-apps/api/core');
+            for (const file of modifiedFiles) {
+                if (file.path) {
+                    await saveFile(file.id, file.path, true);
+                    await invoke('write_file', { path: file.path, content: file.content });
+                }
+            }
+            const stillModified = openFiles.value.some(f => f.modified);
+            if (stillModified) return false;
+        }
+
+        return true;
     }
 
     return {
@@ -179,6 +246,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         files,
         openFiles,
         activeFileId,
+        showUnsavedChangesModal,
+        unsavedFilesForModal,
         // Getters
         activeFile,
         hasUnsavedChanges,
@@ -195,6 +264,10 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         createNewFile,
         saveFile,
         setFileLanguage,
+        requestCloseConfirmation,
+        handleModalChoice,
+        closeFileWithConfirmation,
+        closeWindowWithConfirmation,
     };
 });
 

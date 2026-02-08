@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import type { OpenFile } from '@/stores/workspace';
+import { type OpenFile, useWorkspaceStore } from '@/stores/workspace';
 import { computed } from 'vue';
-import { ask } from '@tauri-apps/plugin-dialog';
 
 const props = defineProps<{
   file: OpenFile;
@@ -12,6 +11,8 @@ const emit = defineEmits<{
   select: [];
   close: [];
 }>();
+
+const workspaceStore = useWorkspaceStore();
 
 const icon = computed(() => {
   const ext = props.file.name.split('.').pop() || '';
@@ -31,25 +32,8 @@ const icon = computed(() => {
 
 async function handleClose(e: MouseEvent) {
   e.stopPropagation();
-  
-  // Se há mudanças não salvas, perguntar ao usuário
-  if (props.file.modified) {
-    const shouldClose = await ask(
-      `O arquivo "${props.file.name}" tem alterações não salvas. Deseja fechar mesmo assim?`,
-      { 
-        title: 'Alterações não salvas', 
-        kind: 'warning',
-        okLabel: 'Fechar sem salvar',
-        cancelLabel: 'Cancelar'
-      }
-    );
-    
-    if (!shouldClose) {
-      return;
-    }
-  }
-  
-  emit('close');
+
+  await workspaceStore.closeFileWithConfirmation(props.file.id);
 }
 </script>
 

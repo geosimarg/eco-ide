@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { useWorkspaceStore } from '@/stores/workspace';
 import ActivityBar from '@/components/layout/ActivityBar.vue';
 import Sidebar from '@/components/layout/Sidebar.vue';
 import EditorArea from '@/components/layout/EditorArea.vue';
 import StatusBar from '@/components/layout/StatusBar.vue';
 import TitleBar from '@/components/layout/TitleBar.vue';
+import UnsavedChangesModal from '@/components/modals/UnsavedChangesModal.vue';
+
+const workspaceStore = useWorkspaceStore();
 
 // Estado dos painéis
 const sidebarVisible = ref(true);
@@ -22,6 +27,22 @@ function setActiveView(view: typeof activeView.value) {
     sidebarVisible.value = true;
   }
 }
+
+onMounted(async () => {
+  const appWindow = getCurrentWindow();
+  await appWindow.onCloseRequested(async (event) => {
+    if (!workspaceStore.hasUnsavedChanges) {
+      return;
+    }
+
+    event.preventDefault();
+    const shouldClose = await workspaceStore.closeWindowWithConfirmation();
+    
+    if (shouldClose) {
+      appWindow.destroy();
+    }
+  });
+});
 </script>
 
 <template>
@@ -45,6 +66,14 @@ function setActiveView(view: typeof activeView.value) {
       <!-- Área do Editor (abas + editor de código) -->
       <EditorArea class="flex-1" />
     </div>
+
+    <UnsavedChangesModal 
+      :visible="workspaceStore.showUnsavedChangesModal"
+      :files="workspaceStore.unsavedFilesForModal"
+      @save="workspaceStore.handleModalChoice('save')"
+      @discard="workspaceStore.handleModalChoice('discard')"
+      @cancel="workspaceStore.handleModalChoice('cancel')"
+    />
 
     <!-- Status Bar (rodapé) -->
     <StatusBar />
