@@ -45,5 +45,25 @@
     },
     "workspace": {
         "no_folder": "No folder open"
+    },
+    "explorer": {
+        "new_file": "New File",
+        "open_folder": "Open Folder",
+        "title": "Explorer"
+    },
+    "new_file_modal": {
+        "title": "New File",
+        "create_in": "Create in:",
+        "placeholder": "File name (e.g. script.ts)",
+        "cancel": "Cancel",
+        "create": "Create"
+    },
+    "search": {
+        "placeholder": "Search in files...",
+        "loading": "Searching...",
+        "no_results": "No results found",
+        "results_found": "{count} results found",
+        "file": "File",
+        "line": "Line"
     }
 }

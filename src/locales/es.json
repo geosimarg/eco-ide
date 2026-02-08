@@ -45,5 +45,25 @@
     },
     "workspace": {
         "no_folder": "Sin carpeta abierta"
+    },
+    "explorer": {
+        "new_file": "Nuevo Archivo",
+        "open_folder": "Abrir Carpeta",
+        "title": "Explorador"
+    },
+    "new_file_modal": {
+        "title": "Nuevo Archivo",
+        "create_in": "Crear en:",
+        "placeholder": "Nombre del archivo (ej: script.ts)",
+        "cancel": "Cancelar",
+        "create": "Crear"
+    },
+    "search": {
+        "placeholder": "Buscar en archivos...",
+        "loading": "Buscando...",
+        "no_results": "Ningún resultado encontrado",
+        "results_found": "{count} resultados encontrados",
+        "file": "Archivo",
+        "line": "Línea"
     }
 }
