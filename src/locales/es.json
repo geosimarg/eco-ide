@@ -1,0 +1,49 @@
+{
+    "menu": {
+        "file": "Archivo",
+        "edit": "Editar",
+        "view": "Ver",
+        "help": "Ayuda"
+    },
+    "file": {
+        "new_file": "Nuevo Archivo",
+        "new_window": "Nueva Ventana",
+        "open_file": "Abrir Archivo",
+        "open_folder": "Abrir Carpeta",
+        "open_recent": "Abrir Reciente",
+        "save": "Guardar",
+        "save_as": "Guardar Como",
+        "exit": "Salir"
+    },
+    "edit": {
+        "undo": "Deshacer",
+        "redo": "Rehacer",
+        "cut": "Cortar",
+        "copy": "Copiar",
+        "paste": "Pegar"
+    },
+    "view": {
+        "language": "Idioma",
+        "theme": "Tema",
+        "sidebar": "Barra Lateral",
+        "statusbar": "Barra de Estado"
+    },
+    "help": {
+        "about": "Acerca de",
+        "documentation": "Documentación"
+    },
+    "statusbar": {
+        "open_folder": "Abrir Carpeta",
+        "line": "Ln",
+        "col": "Col",
+        "selected": "seleccionados",
+        "indentation": "Indentación",
+        "encoding": "Codificación",
+        "eol": "Fin de línea",
+        "language": "Lenguaje",
+        "spaces": "Espacios"
+    },
+    "workspace": {
+        "no_folder": "Sin carpeta abierta"
+    }
+}

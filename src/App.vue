@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useWorkspaceStore } from '@/stores/workspace';
+import { useI18nStore } from '@/stores/i18n';
 import ActivityBar from '@/components/layout/ActivityBar.vue';
 import Sidebar from '@/components/layout/Sidebar.vue';
 import EditorArea from '@/components/layout/EditorArea.vue';
@@ -10,6 +11,7 @@ import TitleBar from '@/components/layout/TitleBar.vue';
 import UnsavedChangesModal from '@/components/modals/UnsavedChangesModal.vue';
 
 const workspaceStore = useWorkspaceStore();
+const i18nStore = useI18nStore();
 
 // Estado dos painéis
 const sidebarVisible = ref(true);
@@ -29,6 +31,9 @@ function setActiveView(view: typeof activeView.value) {
 }
 
 onMounted(async () => {
+  // Inicializar idioma
+  await i18nStore.initLocale();
+
   const appWindow = getCurrentWindow();
   await appWindow.onCloseRequested(async (event) => {
     if (!workspaceStore.hasUnsavedChanges) {
@@ -37,7 +42,7 @@ onMounted(async () => {
 
     event.preventDefault();
     const shouldClose = await workspaceStore.closeWindowWithConfirmation();
-    
+
     if (shouldClose) {
       appWindow.destroy();
     }
@@ -52,28 +57,18 @@ onMounted(async () => {
 
     <div class="main-content">
       <!-- Activity Bar (barra lateral com ícones) -->
-      <ActivityBar
-        :active-view="activeView"
-        @select="setActiveView"
-      />
+      <ActivityBar :active-view="activeView" @select="setActiveView" />
 
       <!-- Sidebar (explorador de arquivos, busca, etc) -->
-      <Sidebar
-        v-if="sidebarVisible"
-        :active-view="activeView"
-      />
+      <Sidebar v-if="sidebarVisible" :active-view="activeView" />
 
       <!-- Área do Editor (abas + editor de código) -->
       <EditorArea class="flex-1" />
     </div>
 
-    <UnsavedChangesModal 
-      :visible="workspaceStore.showUnsavedChangesModal"
-      :files="workspaceStore.unsavedFilesForModal"
-      @save="workspaceStore.handleModalChoice('save')"
-      @discard="workspaceStore.handleModalChoice('discard')"
-      @cancel="workspaceStore.handleModalChoice('cancel')"
-    />
+    <UnsavedChangesModal :visible="workspaceStore.showUnsavedChangesModal" :files="workspaceStore.unsavedFilesForModal"
+      @save="workspaceStore.handleModalChoice('save')" @discard="workspaceStore.handleModalChoice('discard')"
+      @cancel="workspaceStore.handleModalChoice('cancel')" />
 
     <!-- Status Bar (rodapé) -->
     <StatusBar />

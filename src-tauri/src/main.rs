@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
+use tauri::Manager;
 
 /// Representa uma entrada no sistema de arquivos (arquivo ou diretório)
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -196,6 +197,21 @@ fn search_files(
     Ok(results)
 }
 
+/// Retorna o diretório de configuração da aplicação
+#[tauri::command]
+fn get_app_config_dir(app_handle: tauri::AppHandle) -> Result<String, AppError> {
+    let config_dir = app_handle.path().app_config_dir().map_err(|_| {
+        AppError::InvalidPath("Não foi possível determinar o diretório de configuração do app".to_string())
+    })?;
+    
+    // Garantir que o diretório existe
+    if !config_dir.exists() {
+        fs::create_dir_all(&config_dir)?;
+    }
+    
+    Ok(config_dir.to_string_lossy().to_string())
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -210,6 +226,7 @@ fn main() {
             delete_path,
             rename_path,
             search_files,
+            get_app_config_dir,
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao executar a aplicação Tauri");

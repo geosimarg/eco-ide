@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { useWorkspaceStore } from '@/stores/workspace';
 import { useEditorStore } from '@/stores/editor';
 import { useConfigStore } from '@/stores/config';
+import { useI18nStore } from '@/stores/i18n';
 import { open } from '@tauri-apps/plugin-dialog';
 import { logger } from '@/utils/logger';
 import LanguageSelector from '@/components/editor/LanguageSelector.vue';
@@ -10,6 +11,7 @@ import LanguageSelector from '@/components/editor/LanguageSelector.vue';
 const workspaceStore = useWorkspaceStore();
 const editorStore = useEditorStore();
 const configStore = useConfigStore();
+const i18n = useI18nStore();
 
 // Dados reais do arquivo ativo
 const activeFile = computed(() => workspaceStore.activeFile);
@@ -22,7 +24,7 @@ const selectionLength = computed(() => editorStore.selectionLength);
 
 const encoding = 'UTF-8';
 const eol = 'LF';
-const indentation = 'Espaços: 2';
+const indentation = computed(() => `${i18n.t('statusbar.spaces')}: 2`);
 
 // Seletor de linguagem
 const showLanguageSelector = ref(false);
@@ -37,7 +39,7 @@ function handleLanguageSelect(newLanguage: string) {
   if (activeFile.value) {
     // Atualizar linguagem no arquivo aberto
     workspaceStore.setFileLanguage(activeFile.value.id, newLanguage);
-    
+
     // Salvar override na config do workspace se tiver caminho
     if (activeFile.value.path && workspaceStore.workspacePath) {
       configStore.setLanguageOverride(activeFile.value.path, newLanguage);
@@ -53,7 +55,7 @@ async function handleOpenFolder() {
       multiple: false,
       title: 'Selecione uma pasta'
     });
-    
+
     if (selected && typeof selected === 'string') {
       await workspaceStore.openFolder(selected);
       // Carregar config do workspace
@@ -68,49 +70,44 @@ async function handleOpenFolder() {
 <template>
   <footer class="statusbar">
     <div class="statusbar-left">
-      <button class="status-item" title="Abrir pasta" @click="handleOpenFolder">
+      <button class="status-item" :title="i18n.t('statusbar.open_folder')" @click="handleOpenFolder">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V9C21 7.89543 20.1046 7 19 7H12L10 5H5C3.89543 5 3 5.89543 3 7Z" />
+          <path
+            d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V9C21 7.89543 20.1046 7 19 7H12L10 5H5C3.89543 5 3 5.89543 3 7Z" />
         </svg>
-        <span>Abrir Pasta</span>
+        <span>{{ i18n.t('statusbar.open_folder') }}</span>
       </button>
     </div>
 
     <div class="statusbar-right">
-      <button class="status-item" v-if="activeFile" :title="`Linha ${cursorLine}, Coluna ${cursorColumn}`">
-        Ln {{ cursorLine }}, Col {{ cursorColumn }}
-        <span v-if="selectionLength > 0" class="selection-info">({{ selectionLength }} selecionados)</span>
+      <button class="status-item" v-if="activeFile"
+        :title="`${i18n.t('statusbar.line')} ${cursorLine}, ${i18n.t('statusbar.col')} ${cursorColumn}`">
+        {{ i18n.t('statusbar.line') }} {{ cursorLine }}, {{ i18n.t('statusbar.col') }} {{ cursorColumn }}
+        <span v-if="selectionLength > 0" class="selection-info">({{ selectionLength }} {{ i18n.t('statusbar.selected')
+          }})</span>
       </button>
-      
-      <button class="status-item" v-if="activeFile" :title="`Indentação: ${indentation}`">
+
+      <button class="status-item" v-if="activeFile" :title="`${i18n.t('statusbar.indentation')}: ${indentation}`">
         {{ indentation }}
       </button>
-      
-      <button class="status-item" :title="`Codificação: ${encoding}`">
+
+      <button class="status-item" :title="`${i18n.t('statusbar.encoding')}: ${encoding}`">
         {{ encoding }}
       </button>
-      
-      <button class="status-item" :title="`Fim de linha: ${eol}`">
+
+      <button class="status-item" :title="`${i18n.t('statusbar.eol')}: ${eol}`">
         {{ eol }}
       </button>
-      
-      <button 
-        class="status-item language" 
-        :title="`Linguagem: ${language}`"
-        @click="openLanguageSelector"
-      >
+
+      <button class="status-item language" :title="`${i18n.t('statusbar.language')}: ${language}`"
+        @click="openLanguageSelector">
         {{ language }}
       </button>
     </div>
   </footer>
-  
-  <!-- Modal seletor de linguagem -->
-  <LanguageSelector 
-    :visible="showLanguageSelector"
-    :current-language="language"
-    @select="handleLanguageSelect"
-    @close="showLanguageSelector = false"
-  />
+
+  <LanguageSelector :visible="showLanguageSelector" :current-language="language" @select="handleLanguageSelect"
+    @close="showLanguageSelector = false" />
 </template>
 
 <style scoped>

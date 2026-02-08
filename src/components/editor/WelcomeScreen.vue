@@ -16,7 +16,7 @@ async function handleOpenFolder() {
       multiple: false,
       title: 'Selecione uma pasta'
     });
-    
+
     if (selected && typeof selected === 'string') {
       await workspaceStore.openFolder(selected);
       await configStore.loadConfig(selected);
@@ -45,36 +45,20 @@ async function handleOpenFile() {
         { name: 'Markdown', extensions: ['md'] },
       ]
     });
-    
+
     if (selected && typeof selected === 'string') {
       // Ler conteúdo do arquivo
       const content = await invoke<string>('read_file', { path: selected });
       // Abrir no editor
       workspaceStore.openFile({
-        id: crypto.randomUUID(),
         name: selected.split('/').pop() || selected.split('\\').pop() || 'arquivo',
         path: selected,
         content: content,
-        modified: false,
-        language: getLanguageFromPath(selected),
       });
     }
   } catch (error) {
     logger.error('Erro ao abrir arquivo:', error);
   }
-}
-
-function getLanguageFromPath(path: string): string {
-  const ext = path.split('.').pop()?.toLowerCase() || '';
-  const languages: Record<string, string> = {
-    ts: 'TypeScript', tsx: 'TypeScript React',
-    js: 'JavaScript', jsx: 'JavaScript React',
-    vue: 'Vue', rs: 'Rust', py: 'Python',
-    json: 'JSON', html: 'HTML', htm: 'HTML',
-    css: 'CSS', scss: 'SCSS', less: 'Less',
-    md: 'Markdown', txt: 'Plain Text',
-  };
-  return languages[ext] || 'Plain Text';
 }
 
 async function handleNewFile() {
@@ -83,7 +67,7 @@ async function handleNewFile() {
 
 async function handleDocumentation() {
   try {
-    await shellOpen('https://github.com/eco-ide/docs');
+    await shellOpen('https://github.com/geosimarg/eco-ide/tree/master/docs');
   } catch (error) {
     logger.error('Erro ao abrir documentação:', error);
   }
@@ -100,11 +84,12 @@ async function handleDocumentation() {
       <div class="actions">
         <button class="action-btn primary" @click="handleOpenFolder">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V9C21 7.89543 20.1046 7 19 7H12L10 5H5C3.89543 5 3 5.89543 3 7Z" />
+            <path
+              d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V9C21 7.89543 20.1046 7 19 7H12L10 5H5C3.89543 5 3 5.89543 3 7Z" />
           </svg>
           <span>Abrir Pasta</span>
         </button>
-        
+
         <button class="action-btn" @click="handleOpenFile">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -112,7 +97,7 @@ async function handleDocumentation() {
           </svg>
           <span>Abrir Arquivo</span>
         </button>
-        
+
         <button class="action-btn" @click="handleNewFile">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -122,7 +107,7 @@ async function handleDocumentation() {
           </svg>
           <span>Novo Arquivo</span>
         </button>
-        
+
         <button class="action-btn" @click="handleDocumentation">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="12" cy="12" r="10" />
@@ -183,8 +168,15 @@ async function handleDocumentation() {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .title {

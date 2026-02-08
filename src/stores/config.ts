@@ -7,12 +7,14 @@ const configFile = 'workspace.json';
 
 export interface WorkspaceConfig {
     languageOverrides: Record<string, string>; // path -> language
+    locale?: string;
 }
 
 export const useConfigStore = defineStore('config', () => {
     const workspacePath = ref<string | null>(null);
     const config = ref<WorkspaceConfig>({
-        languageOverrides: {}
+        languageOverrides: {},
+        locale: undefined
     });
 
     async function loadConfig(wsPath: string) {
@@ -22,11 +24,14 @@ export const useConfigStore = defineStore('config', () => {
         try {
             const { invoke } = await import('@tauri-apps/api/core');
             const content = await invoke<string>('read_file', { path: configPath });
-            config.value = JSON.parse(content);
+            config.value = {
+                languageOverrides: {},
+                ...JSON.parse(content)
+            };
             logger.log('Configuração carregada de:', configPath);
         } catch (e) {
             logger.log('Nenhuma configuração encontrada ou erro ao ler:', e);
-            config.value = { languageOverrides: {} };
+            config.value = { languageOverrides: {}, locale: undefined };
             await saveConfig();
         }
     }
@@ -55,17 +60,33 @@ export const useConfigStore = defineStore('config', () => {
         }
     }
 
+    function getRelativePath(fullPath: string): string {
+        if (!workspacePath.value) return fullPath;
+        if (fullPath.startsWith(workspacePath.value)) {
+            let rel = fullPath.slice(workspacePath.value.length);
+            // Remove barra inicial se houver
+            if (rel.startsWith('/') || rel.startsWith('\\')) {
+                rel = rel.slice(1);
+            }
+            return rel;
+        }
+        return fullPath;
+    }
+
     function setLanguageOverride(filePath: string, language: string) {
-        config.value.languageOverrides[filePath] = language;
+        const relativePath = getRelativePath(filePath);
+        config.value.languageOverrides[relativePath] = language;
         saveConfig();
     }
 
     function getLanguageForFile(filePath: string): string | null {
-        return config.value.languageOverrides[filePath] || null;
+        const relativePath = getRelativePath(filePath);
+        return config.value.languageOverrides[relativePath] || null;
     }
 
     function clearLanguageOverride(filePath: string) {
-        delete config.value.languageOverrides[filePath];
+        const relativePath = getRelativePath(filePath);
+        delete config.value.languageOverrides[relativePath];
         saveConfig();
     }
 

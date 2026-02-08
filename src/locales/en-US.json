@@ -1,0 +1,49 @@
+{
+    "menu": {
+        "file": "File",
+        "edit": "Edit",
+        "view": "View",
+        "help": "Help"
+    },
+    "file": {
+        "new_file": "New File",
+        "new_window": "New Window",
+        "open_file": "Open File",
+        "open_folder": "Open Folder",
+        "open_recent": "Open Recent",
+        "save": "Save",
+        "save_as": "Save As",
+        "exit": "Exit"
+    },
+    "edit": {
+        "undo": "Undo",
+        "redo": "Redo",
+        "cut": "Cut",
+        "copy": "Copy",
+        "paste": "Paste"
+    },
+    "view": {
+        "language": "Language",
+        "theme": "Theme",
+        "sidebar": "Sidebar",
+        "statusbar": "Status Bar"
+    },
+    "help": {
+        "about": "About",
+        "documentation": "Documentation"
+    },
+    "statusbar": {
+        "open_folder": "Open Folder",
+        "line": "Ln",
+        "col": "Col",
+        "selected": "selected",
+        "indentation": "Indentation",
+        "encoding": "Encoding",
+        "eol": "End of Line",
+        "language": "Language",
+        "spaces": "Spaces"
+    },
+    "workspace": {
+        "no_folder": "No folder open"
+    }
+}

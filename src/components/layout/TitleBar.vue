@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import MenuBar from './MenuBar.vue';
+import { useWorkspaceStore } from '@/stores/workspace';
+import { useI18nStore } from '@/stores/i18n';
 
+const workspaceStore = useWorkspaceStore();
+const i18n = useI18nStore();
 const isMaximized = ref(false);
+
+const workspaceName = computed(() => workspaceStore.workspaceName || i18n.t('workspace.no_folder'));
 
 async function handleMinimize() {
   const { getCurrentWindow } = await import('@tauri-apps/api/window');
@@ -29,13 +36,17 @@ async function handleClose() {
 
 <template>
   <div class="titlebar" data-tauri-drag-region>
-    <div class="titlebar-left">
+    <div class="titlebar-left" data-tauri-drag-region>
       <img src="/favicon.svg" alt="Eco IDE" class="logo" />
       <span class="title">Eco IDE</span>
+      <div class="menubar-container">
+        <MenuBar />
+      </div>
     </div>
 
+    <!-- Center e Right mantidos -->
     <div class="titlebar-center" data-tauri-drag-region>
-      <span class="workspace-name">Sem pasta aberta</span>
+      <span class="workspace-name">{{ workspaceName }}</span>
     </div>
 
     <div class="titlebar-right">
@@ -81,6 +92,12 @@ async function handleClose() {
   gap: var(--space-sm);
 }
 
+.menubar-container {
+  height: 100%;
+  margin-left: var(--space-sm);
+}
+
+/* Resto dos estilos mantidos */
 .logo {
   width: 16px;
   height: 16px;
@@ -90,6 +107,7 @@ async function handleClose() {
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .titlebar-center {
