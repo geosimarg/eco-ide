@@ -62,9 +62,9 @@ export const useI18nStore = defineStore('i18n', () => {
         }
     }
 
-    function t(key: string): string {
+    function t(key: string, args?: Record<string, string | number>): string {
         const keys = key.split('.');
-        let value = translations.value;
+        let value: any = translations.value;
 
         for (const k of keys) {
             if (value && typeof value === 'object' && k in value) {
@@ -74,7 +74,15 @@ export const useI18nStore = defineStore('i18n', () => {
             }
         }
 
-        return typeof value === 'string' ? value : key;
+        let text = typeof value === 'string' ? value : key;
+
+        if (args) {
+            Object.entries(args).forEach(([k, v]) => {
+                text = text.replace(`{${k}}`, String(v));
+            });
+        }
+
+        return text;
     }
 
     return {
