@@ -1,0 +1,17 @@
+.vscode/
+node_modules/
+target/
+dist/
+src-tauri/target/
+logs/
+.idea/
+*.log
+npm-debug.log*
+*.swp
+*.swo
+*.wasm
+.DS_Store
+Thumbs.db
+.env
+.env.local
+.env.*.local

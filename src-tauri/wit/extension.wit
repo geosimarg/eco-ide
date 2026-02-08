@@ -1,0 +1,171 @@
+/// Eco IDE Extension API
+/// 
+/// Este é o contrato WIT (WebAssembly Interface Types) que define
+/// a interface entre extensões e o core da IDE.
+/// 
+/// Extensões podem ser escritas em qualquer linguagem que compile para WASM:
+/// - Rust (com wit-bindgen)
+/// - TypeScript (com jco/componentize-js) 
+/// - Python (com componentize-py)
+/// - Go (com TinyGo)
+
+package eco:extension@0.1.0;
+
+/// Interface para manipulação do editor de código
+interface editor {
+    /// Posição no documento (linha e coluna, 0-indexed)
+    record position {
+        line: u32,
+        column: u32,
+    }
+    
+    /// Range de texto (início e fim)
+    record range {
+        start: position,
+        end: position,
+    }
+    
+    /// Informações sobre uma aba aberta
+    record tab-info {
+        id: string,
+        name: string,
+        path: string,
+        is-modified: bool,
+    }
+    
+    /// Obtém o texto do documento ativo (ou uma parte dele)
+    get-text: func(range: option<range>) -> string;
+    
+    /// Obtém todas as linhas do documento
+    get-lines: func() -> list<string>;
+    
+    /// Insere texto em uma posição
+    insert-text: func(pos: position, text: string);
+    
+    /// Substitui texto em um range
+    replace-text: func(range: range, text: string);
+    
+    /// Obtém a posição atual do cursor
+    get-cursor: func() -> position;
+    
+    /// Move o cursor para uma posição
+    set-cursor: func(pos: position);
+    
+    /// Obtém a seleção atual
+    get-selection: func() -> option<range>;
+    
+    /// Define a seleção
+    set-selection: func(range: range);
+    
+    /// Lista todas as abas abertas
+    get-open-tabs: func() -> list<tab-info>;
+    
+    /// Obtém a aba ativa
+    get-active-tab: func() -> option<tab-info>;
+    
+    /// Salva o documento atual
+    save: func() -> result<_, string>;
+}
+
+/// Interface para registro de comandos
+interface commands {
+    /// Registra um novo comando na paleta de comandos
+    register: func(id: string, title: string);
+    
+    /// Remove um comando registrado
+    unregister: func(id: string);
+    
+    /// Executa um comando pelo ID
+    execute: func(id: string) -> result<_, string>;
+}
+
+/// Interface para elementos de UI
+interface ui {
+    /// Níveis de mensagem
+    enum message-level {
+        info,
+        warning,
+        error,
+    }
+    
+    /// Opção de ação para diálogos
+    record action {
+        id: string,
+        label: string,
+    }
+    
+    /// Mostra uma mensagem toast
+    show-message: func(msg: string, level: message-level);
+    
+    /// Mostra uma mensagem com ações e retorna o ID da ação selecionada
+    show-message-with-actions: func(msg: string, level: message-level, actions: list<action>) -> option<string>;
+    
+    /// Mostra um quickpick (lista de seleção rápida)
+    show-quickpick: func(items: list<string>, placeholder: option<string>) -> option<u32>;
+    
+    /// Mostra um input box
+    show-input: func(prompt: string, placeholder: option<string>) -> option<string>;
+    
+    /// Atualiza o texto da barra de status
+    set-status-text: func(text: string);
+}
+
+/// Interface para acesso ao sistema de arquivos (sandboxed no workspace)
+interface workspace {
+    /// Entrada de arquivo/diretório
+    record file-entry {
+        name: string,
+        path: string,
+        is-directory: bool,
+    }
+    
+    /// Obtém o caminho raiz do workspace
+    get-root: func() -> option<string>;
+    
+    /// Lista arquivos em um diretório (relativo ao workspace)
+    list-files: func(path: string) -> result<list<file-entry>, string>;
+    
+    /// Lê o conteúdo de um arquivo
+    read-file: func(path: string) -> result<string, string>;
+    
+    /// Escreve conteúdo em um arquivo
+    write-file: func(path: string, content: string) -> result<_, string>;
+    
+    /// Verifica se um arquivo existe
+    file-exists: func(path: string) -> bool;
+}
+
+/// Interface para logging
+interface logging {
+    /// Níveis de log
+    enum log-level {
+        debug,
+        info,
+        warn,
+        error,
+    }
+    
+    /// Loga uma mensagem
+    log: func(level: log-level, message: string);
+}
+
+/// Mundo que define o contrato completo de uma extensão
+world extension {
+    /// Importa as interfaces que a extensão pode usar
+    import editor;
+    import commands;
+    import ui;
+    import workspace;
+    import logging;
+    
+    /// Exporta as funções que a extensão deve implementar
+    
+    /// Chamado quando a extensão é ativada
+    export activate: func();
+    
+    /// Chamado quando a extensão é desativada
+    export deactivate: func();
+    
+    /// Chamado quando um comando registrado pela extensão é executado
+    export on-command: func(command-id: string);
+}

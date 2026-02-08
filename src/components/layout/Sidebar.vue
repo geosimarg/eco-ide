@@ -1,0 +1,61 @@
+<script setup lang="ts">
+import FileExplorer from '@/components/sidebar/FileExplorer.vue';
+import SearchPanel from '@/components/sidebar/SearchPanel.vue';
+import ExtensionsPanel from '@/components/sidebar/ExtensionsPanel.vue';
+import GitPanel from '@/components/sidebar/GitPanel.vue';
+
+defineProps<{
+  activeView: 'files' | 'search' | 'extensions' | 'git';
+}>();
+
+const titles: Record<string, string> = {
+  files: 'EXPLORADOR',
+  search: 'BUSCAR',
+  extensions: 'EXTENSÕES',
+  git: 'CONTROLE DE CÓDIGO',
+};
+</script>
+
+<template>
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">{{ titles[activeView] }}</span>
+    </div>
+
+    <div class="sidebar-content">
+      <FileExplorer v-if="activeView === 'files'" />
+      <SearchPanel v-else-if="activeView === 'search'" />
+      <ExtensionsPanel v-else-if="activeView === 'extensions'" />
+      <GitPanel v-else-if="activeView === 'git'" />
+    </div>
+  </aside>
+</template>
+
+<style scoped>
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: var(--panel-width);
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: var(--space-md);
+  height: var(--tab-height);
+}
+
+.sidebar-title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow: hidden;
+}
+</style>
