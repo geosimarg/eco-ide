@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { useWorkspaceStore, type FileEntry } from '@/stores/workspace';
 import { useConfigStore } from '@/stores/config';
+import { logger } from '@/utils/logger';
 
 const workspaceStore = useWorkspaceStore();
 const configStore = useConfigStore();
@@ -23,7 +24,7 @@ async function openFolder() {
       await configStore.loadConfig(selected);
     }
   } catch (error) {
-    console.error('Erro ao abrir pasta:', error);
+    logger.error('Erro ao abrir pasta:', error);
   }
 }
 
@@ -33,7 +34,7 @@ async function loadFiles(path: string) {
     const entries = await invoke<FileEntry[]>('list_directory', { path });
     workspaceStore.setFiles(entries);
   } catch (error) {
-    console.error('Erro ao listar diretório:', error);
+    logger.error('Erro ao listar diretório:', error);
   }
 }
 
@@ -51,7 +52,7 @@ async function handleFileClick(entry: FileEntry) {
         content,
       });
     } catch (error) {
-      console.error('Erro ao abrir arquivo:', error);
+      logger.error('Erro ao abrir arquivo:', error);
     }
   }
 }

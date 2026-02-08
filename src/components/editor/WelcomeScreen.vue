@@ -4,6 +4,7 @@ import { open as shellOpen } from '@tauri-apps/plugin-shell';
 import { invoke } from '@tauri-apps/api/core';
 import { useWorkspaceStore } from '@/stores/workspace';
 import { useConfigStore } from '@/stores/config';
+import { logger } from '@/utils/logger';
 
 const workspaceStore = useWorkspaceStore();
 const configStore = useConfigStore();
@@ -21,7 +22,7 @@ async function handleOpenFolder() {
       await configStore.loadConfig(selected);
     }
   } catch (error) {
-    console.error('Erro ao abrir pasta:', error);
+    logger.error('Erro ao abrir pasta:', error);
   }
 }
 
@@ -59,7 +60,7 @@ async function handleOpenFile() {
       });
     }
   } catch (error) {
-    console.error('Erro ao abrir arquivo:', error);
+    logger.error('Erro ao abrir arquivo:', error);
   }
 }
 
@@ -84,7 +85,7 @@ async function handleDocumentation() {
   try {
     await shellOpen('https://github.com/eco-ide/docs');
   } catch (error) {
-    console.error('Erro ao abrir documentação:', error);
+    logger.error('Erro ao abrir documentação:', error);
   }
 }
 </script>

@@ -20,6 +20,7 @@ import { markdown } from '@codemirror/lang-markdown';
 import type { OpenFile } from '@/stores/workspace';
 import { useWorkspaceStore } from '@/stores/workspace';
 import { useEditorStore } from '@/stores/editor';
+import { logger } from '@/utils/logger';
 
 const props = defineProps<{
   file: OpenFile;
@@ -232,9 +233,9 @@ async function saveFile() {
     
     workspaceStore.saveFile(props.file.id, filePath, true);
     
-    console.log('Arquivo salvo:', filePath);
+    logger.log('Arquivo salvo:', filePath);
   } catch (error) {
-    console.error('Erro ao salvar arquivo:', error);
+    logger.error('Erro ao salvar arquivo:', error);
   }
 }
 

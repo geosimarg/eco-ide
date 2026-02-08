@@ -4,6 +4,7 @@ import { useWorkspaceStore } from '@/stores/workspace';
 import { useEditorStore } from '@/stores/editor';
 import { useConfigStore } from '@/stores/config';
 import { open } from '@tauri-apps/plugin-dialog';
+import { logger } from '@/utils/logger';
 import LanguageSelector from '@/components/editor/LanguageSelector.vue';
 
 const workspaceStore = useWorkspaceStore();
@@ -59,7 +60,7 @@ async function handleOpenFolder() {
       await configStore.loadConfig(selected);
     }
   } catch (error) {
-    console.error('Erro ao abrir pasta:', error);
+    logger.error('Erro ao abrir pasta:', error);
   }
 }
 </script>

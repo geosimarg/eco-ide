@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { logger } from '@/utils/logger';
 import { useConfigStore } from './config';
 
 export interface OpenFile {
@@ -139,7 +140,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
             setWorkspace(path, folderName);
             setFiles(entries);
         } catch (error) {
-            console.error('Erro ao abrir pasta:', error);
+            logger.error('Erro ao abrir pasta:', error);
         }
     }
 

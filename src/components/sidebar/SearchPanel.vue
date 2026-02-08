@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { logger } from '@/utils/logger';
 
 const searchQuery = ref('');
 const searchResults = ref<Array<{ file: string; line: number; content: string }>>([]);
@@ -24,7 +25,7 @@ async function performSearch() {
       { file: 'src/App.vue', line: 12, content: '  const searchQuery = ref(\'\');' },
     ];
   } catch (error) {
-    console.error('Erro na busca:', error);
+    logger.error('Erro na busca:', error);
   } finally {
     isSearching.value = false;
   }
