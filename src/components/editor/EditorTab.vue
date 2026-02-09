@@ -59,15 +59,15 @@ function onDrop(e: DragEvent) {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  padding: 0 var(--space-md);
+  padding: 5px var(--space-md);
   height: 100%;
-  min-width: 120px;
+  min-width: 80px;
   max-width: 180px;
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   border-right: 1px solid var(--border-subtle);
   cursor: pointer;
   transition: background var(--transition-fast);
-  user-select: none;
+  border-bottom: none;
 }
 
 .tab:hover {
@@ -75,8 +75,8 @@ function onDrop(e: DragEvent) {
 }
 
 .tab.active {
-  background: var(--bg-primary);
-  border-bottom: 2px solid var(--accent-primary);
+  background: var(--editor-bg);
+  border-top: 1px solid var(--accent-primary);
 }
 
 .tab.drag-over {

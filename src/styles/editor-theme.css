@@ -1,0 +1,90 @@
+/* Editor Theme - One Dark
+ * Este arquivo contém as variáveis de tema do editor CodeMirror.
+ * Você pode criar temas alternativos copiando este arquivo e modificando os valores.
+ */
+
+:root {
+    /* Editor Background & Foreground */
+    --editor-bg: #222224;
+    --editor-fg: #abb2bf;
+    --editor-line-height: 1.6;
+    --editor-font-size: 14px;
+
+    /* Cursor & Caret */
+    --editor-cursor-color: #528bff;
+    --editor-cursor-width: 2px;
+
+    /* Selection */
+    --editor-selection-bg: rgba(99, 102, 241, 0.3);
+    --editor-selection-bg-focused: rgba(99, 102, 241, 0.4);
+
+    /* Active Line */
+    --editor-active-line-bg: rgba(255, 255, 255, 0.05);
+
+    /* Gutter (line numbers) */
+    --editor-gutter-bg: var(--editor-bg);
+    --editor-gutter-fg: #6b7280;
+    --editor-gutter-active-fg: #abb2bf;
+
+    /* Matching Brackets */
+    --editor-bracket-match-bg: rgba(99, 102, 241, 0.3);
+    --editor-bracket-match-outline: #528bff;
+
+    /* Tooltips & Autocomplete */
+    --editor-tooltip-bg: #1e1e2e;
+    --editor-tooltip-border: #3b3b4f;
+    --editor-autocomplete-selected-bg: #2d2d3d;
+
+    /* Fold Gutter */
+    --editor-fold-gutter-width: 16px;
+
+    /* Syntax Highlighting - One Dark */
+    --syntax-keyword: #c678dd;
+    --syntax-operator: #56b6c2;
+    --syntax-variable: #e06c75;
+    --syntax-type: #e5c07b;
+    --syntax-number: #d19a66;
+    --syntax-string: #98c379;
+    --syntax-function: #61afef;
+    --syntax-comment: #5c6370;
+    --syntax-property: #e06c75;
+    --syntax-tag: #e06c75;
+    --syntax-attribute: #d19a66;
+    --syntax-link: #61afef;
+    --syntax-heading: #e06c75;
+    --syntax-meta: #abb2bf;
+}
+
+/* Tema alternativo: Dracula (descomente para usar) */
+/*
+:root {
+  --editor-bg: #282a36;
+  --editor-fg: #f8f8f2;
+  --editor-cursor-color: #f8f8f2;
+  --editor-selection-bg: rgba(68, 71, 90, 0.5);
+  --editor-selection-bg-focused: rgba(68, 71, 90, 0.7);
+  --editor-active-line-bg: rgba(68, 71, 90, 0.3);
+  --editor-gutter-bg: #282a36;
+  --editor-gutter-fg: #6272a4;
+  --editor-bracket-match-bg: rgba(189, 147, 249, 0.3);
+  --editor-bracket-match-outline: #bd93f9;
+  --editor-tooltip-bg: #21222c;
+  --editor-tooltip-border: #44475a;
+  --editor-autocomplete-selected-bg: #44475a;
+
+  --syntax-keyword: #ff79c6;
+  --syntax-operator: #ff79c6;
+  --syntax-variable: #f8f8f2;
+  --syntax-type: #8be9fd;
+  --syntax-number: #bd93f9;
+  --syntax-string: #f1fa8c;
+  --syntax-function: #50fa7b;
+  --syntax-comment: #6272a4;
+  --syntax-property: #66d9ef;
+  --syntax-tag: #ff79c6;
+  --syntax-attribute: #50fa7b;
+  --syntax-link: #8be9fd;
+  --syntax-heading: #bd93f9;
+  --syntax-meta: #f8f8f2;
+}
+*/

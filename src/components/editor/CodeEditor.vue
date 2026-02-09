@@ -38,73 +38,66 @@ let editorView: EditorView | null = null;
 const languageCompartment = new Compartment();
 let scrollDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-// Tema dark customizado com cores vibrantes (One Dark inspired)
+import { HighlightStyle } from '@codemirror/language';
+import { tags } from '@lezer/highlight';
+
 const darkTheme = EditorView.theme({
   '&': {
-    color: '#abb2bf',
-    backgroundColor: '#222224ff',
+    color: 'var(--editor-fg)',
+    backgroundColor: 'var(--editor-bg)',
     height: '100%',
   },
   '.cm-content': {
     fontFamily: 'var(--font-mono)',
-    fontSize: '14px',
-    lineHeight: '1.6',
-    caretColor: '#528bff',
+    fontSize: 'var(--editor-font-size)',
+    lineHeight: 'var(--editor-line-height)',
+    caretColor: 'var(--editor-cursor-color)',
     padding: '8px 0',
   },
   '.cm-cursor': {
-    borderLeftColor: '#528bff',
-    borderLeftWidth: '2px',
+    borderLeftColor: 'var(--editor-cursor-color)',
+    borderLeftWidth: 'var(--editor-cursor-width)',
   },
   '.cm-selectionBackground': {
-    backgroundColor: 'rgba(99, 102, 241, 0.3) !important',
+    backgroundColor: 'var(--editor-selection-bg) !important',
   },
   '&.cm-focused .cm-selectionBackground': {
-    backgroundColor: 'rgba(99, 102, 241, 0.4) !important',
+    backgroundColor: 'var(--editor-selection-bg-focused) !important',
   },
   '.cm-activeLine': {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'var(--editor-active-line-bg)',
   },
   '.cm-activeLineGutter': {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'var(--editor-active-line-bg)',
   },
   '.cm-gutters': {
-    backgroundColor: '#16161e',
-    color: '#6b7280',
+    backgroundColor: 'var(--editor-gutter-bg)',
+    color: 'var(--editor-gutter-fg)',
     border: 'none',
     paddingRight: '8px',
+    userSelect: 'none',
+    MozUserSelect: 'none',
+    WebkitUserSelect: 'none',
+    msUserSelect: 'none',
   },
   '.cm-lineNumbers .cm-gutterElement': {
     paddingLeft: '16px',
     minWidth: '40px',
-    userSelect: 'none!important',
-    WebkitUserSelect: 'none!important',
-    MozUserSelect: 'none!important',
-    MsUserSelect: 'none!important',
-    OUserSelect: 'none!important',
-    KhtmlUserSelect: 'none!important',
-  },
-  '.line': {
-    userSelect: 'none!important',
-    WebkitUserSelect: 'none!important',
-    MozUserSelect: 'none!important',
-    MsUserSelect: 'none!important',
-    OUserSelect: 'none!important',
-    KhtmlUserSelect: 'none!important',
+    userSelect: 'none',
   },
   '.cm-foldGutter': {
-    width: '16px',
+    width: 'var(--editor-fold-gutter-width)',
   },
   '.cm-matchingBracket': {
-    backgroundColor: 'rgba(99, 102, 241, 0.3)',
-    outline: '1px solid #528bff',
+    backgroundColor: 'var(--editor-bracket-match-bg)',
+    outline: '1px solid var(--editor-bracket-match-outline)',
   },
   '.cm-scroller': {
     overflow: 'auto',
   },
   '.cm-tooltip': {
-    backgroundColor: '#1e1e2e',
-    border: '1px solid #3b3b4f',
+    backgroundColor: 'var(--editor-tooltip-bg)',
+    border: '1px solid var(--editor-tooltip-border)',
     borderRadius: '6px',
   },
   '.cm-tooltip-autocomplete': {
@@ -113,50 +106,47 @@ const darkTheme = EditorView.theme({
       fontSize: '13px',
     },
     '& > ul > li[aria-selected]': {
-      backgroundColor: '#2d2d3d',
+      backgroundColor: 'var(--editor-autocomplete-selected-bg)',
     },
   },
 }, { dark: true });
 
-// Highlight style com cores vibrantes (One Dark)
-import { HighlightStyle } from '@codemirror/language';
-import { tags } from '@lezer/highlight';
-
 const oneDarkHighlight = HighlightStyle.define([
-  { tag: tags.keyword, color: '#c678dd', fontWeight: 'bold' },
-  { tag: tags.operator, color: '#56b6c2' },
-  { tag: tags.special(tags.variableName), color: '#e06c75' },
-  { tag: tags.typeName, color: '#e5c07b' },
-  { tag: tags.atom, color: '#d19a66' },
-  { tag: tags.number, color: '#d19a66' },
-  { tag: tags.bool, color: '#d19a66' },
-  { tag: tags.string, color: '#98c379' },
-  { tag: tags.regexp, color: '#98c379' },
-  { tag: tags.escape, color: '#56b6c2' },
-  { tag: tags.special(tags.string), color: '#56b6c2' },
-  { tag: tags.definition(tags.variableName), color: '#e06c75' },
-  { tag: tags.local(tags.variableName), color: '#e06c75' },
-  { tag: tags.variableName, color: '#e06c75' },
-  { tag: tags.function(tags.variableName), color: '#61afef' },
-  { tag: tags.function(tags.propertyName), color: '#61afef' },
-  { tag: tags.propertyName, color: '#e06c75' },
-  { tag: tags.comment, color: '#5c6370', fontStyle: 'italic' },
-  { tag: tags.lineComment, color: '#5c6370', fontStyle: 'italic' },
-  { tag: tags.blockComment, color: '#5c6370', fontStyle: 'italic' },
-  { tag: tags.meta, color: '#abb2bf' },
-  { tag: tags.link, color: '#61afef', textDecoration: 'underline' },
-  { tag: tags.heading, color: '#e06c75', fontWeight: 'bold' },
+  { tag: tags.keyword, color: 'var(--syntax-keyword)', fontWeight: 'bold' },
+  { tag: tags.operator, color: 'var(--syntax-operator)' },
+  { tag: tags.special(tags.variableName), color: 'var(--syntax-variable)' },
+  { tag: tags.typeName, color: 'var(--syntax-type)' },
+  { tag: tags.atom, color: 'var(--syntax-number)' },
+  { tag: tags.number, color: 'var(--syntax-number)' },
+  { tag: tags.bool, color: 'var(--syntax-number)' },
+  { tag: tags.string, color: 'var(--syntax-string)' },
+  { tag: tags.regexp, color: 'var(--syntax-string)' },
+  { tag: tags.escape, color: 'var(--syntax-operator)' },
+  { tag: tags.special(tags.string), color: 'var(--syntax-operator)' },
+  { tag: tags.definition(tags.variableName), color: 'var(--syntax-variable)' },
+  { tag: tags.local(tags.variableName), color: 'var(--syntax-variable)' },
+  { tag: tags.variableName, color: 'var(--syntax-variable)' },
+  { tag: tags.function(tags.variableName), color: 'var(--syntax-function)' },
+  { tag: tags.function(tags.propertyName), color: 'var(--syntax-function)' },
+  { tag: tags.propertyName, color: 'var(--syntax-property)' },
+  { tag: tags.comment, color: 'var(--syntax-comment)', fontStyle: 'italic' },
+  { tag: tags.lineComment, color: 'var(--syntax-comment)', fontStyle: 'italic' },
+  { tag: tags.blockComment, color: 'var(--syntax-comment)', fontStyle: 'italic' },
+  { tag: tags.meta, color: 'var(--syntax-meta)' },
+  { tag: tags.link, color: 'var(--syntax-link)', textDecoration: 'underline' },
+  { tag: tags.heading, color: 'var(--syntax-heading)', fontWeight: 'bold' },
   { tag: tags.emphasis, fontStyle: 'italic' },
   { tag: tags.strong, fontWeight: 'bold' },
   { tag: tags.strikethrough, textDecoration: 'line-through' },
-  { tag: tags.className, color: '#e5c07b' },
-  { tag: tags.definition(tags.typeName), color: '#e5c07b' },
-  { tag: tags.tagName, color: '#e06c75' },
-  { tag: tags.attributeName, color: '#d19a66' },
-  { tag: tags.attributeValue, color: '#98c379' },
-  { tag: tags.self, color: '#e06c75' },
-  { tag: tags.null, color: '#d19a66' },
+  { tag: tags.className, color: 'var(--syntax-type)' },
+  { tag: tags.definition(tags.typeName), color: 'var(--syntax-type)' },
+  { tag: tags.tagName, color: 'var(--syntax-tag)' },
+  { tag: tags.attributeName, color: 'var(--syntax-attribute)' },
+  { tag: tags.attributeValue, color: 'var(--syntax-string)' },
+  { tag: tags.self, color: 'var(--syntax-variable)' },
+  { tag: tags.null, color: 'var(--syntax-number)' },
 ]);
+
 
 function getLanguageExtensionByName(langName: string) {
   // Mapeia nome de linguagem para extensão do CodeMirror

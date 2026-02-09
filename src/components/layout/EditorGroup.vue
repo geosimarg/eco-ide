@@ -275,9 +275,9 @@ function onDrop(e: DragEvent) {
 .tabs-container {
     display: flex;
     align-items: center;
-    height: var(--tab-height);
+    height: fit-content;
     background: var(--bg-tertiary);
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: thin solid var(--editor-bg);
 }
 
 .tabs-wrapper {
