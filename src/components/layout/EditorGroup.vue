@@ -198,7 +198,6 @@ function onDrop(e: DragEvent) {
 
 .editor-group {
     position: relative;
-    /* For absolute positioning of indicators */
 }
 
 .drop-indicator {
@@ -207,10 +206,7 @@ function onDrop(e: DragEvent) {
     bottom: 0;
     width: 50%;
     pointer-events: none;
-    background: var(--bg-hover);
-    /* Fallback */
-    background: rgba(100, 100, 255, 0.1);
-    /* Blue tint */
+    background: rgba(34, 197, 94, 0.1);
     z-index: 10;
 }
 

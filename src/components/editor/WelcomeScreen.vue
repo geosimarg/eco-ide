@@ -184,12 +184,8 @@ async function handleDocumentation() {
 .title {
   font-size: 32px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--accent-primary);
   margin-bottom: var(--space-xs);
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .subtitle {
@@ -226,13 +222,16 @@ async function handleDocumentation() {
 }
 
 .action-btn.primary {
-  background: var(--accent-gradient);
+  background: var(--accent-primary);
   border-color: transparent;
-  color: white;
+  color: #0B0F14;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
 }
 
 .action-btn.primary:hover {
-  filter: brightness(1.1);
+  background: var(--accent-primary-hover);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
 }
 
 .shortcuts {
