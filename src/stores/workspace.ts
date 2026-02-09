@@ -491,11 +491,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         }
     }
 
-    async function saveSession() {
-        const configStore = useConfigStore();
-        if (!workspacePath.value) return;
-
-        const sessionData = {
+    function getSessionData() {
+        if (!workspacePath.value) return null;
+        return {
             groups: groups.value.map(g => ({
                 id: g.id,
                 files: g.files
@@ -506,19 +504,25 @@ export const useWorkspaceStore = defineStore('workspace', () => {
             activeGroupId: activeGroupId.value,
             expandedFolders: getExpandedFolders(files.value)
         };
-
-        configStore.config.session = sessionData;
-        await configStore.saveConfig();
-        logger.log('Sessão salva:', sessionData);
     }
 
-    async function restoreSession() {
+    async function saveSession() {
         const configStore = useConfigStore();
-        const session = configStore.config.session;
-        if (!session) return;
+        if (!workspacePath.value) return;
 
+        const sessionData = getSessionData();
+        if (sessionData) {
+            configStore.config.session = sessionData;
+            await configStore.saveConfig();
+            logger.log('Sessão salva:', sessionData);
+        }
+    }
+
+    async function restoreSessionData(session: any) {
+        if (!session) return;
         const { invoke } = await import('@tauri-apps/api/core');
 
+        // Limpar estado atual de grupos (mas manter workspacePath se já setado)
         groups.value = [];
 
         for (const sessionGroup of session.groups) {
@@ -530,8 +534,13 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
             for (const sessionFile of sessionGroup.files) {
                 try {
+                    // Verificar se arquivo existe antes de tentar ler
+                    // O read_file do backend já retorna erro se não existir
                     const content = await invoke<string>('read_file', { path: sessionFile.path });
-                    const name = sessionFile.path.split('/').pop() || sessionFile.path.split('\\').pop() || 'Arquivo';
+
+                    // Extrair nome
+                    const separator = navigator.userAgent.includes('Windows') ? '\\' : '/';
+                    const name = sessionFile.path.split(separator).pop() || 'Arquivo';
 
                     const newFile: OpenFile = {
                         id: crypto.randomUUID(),
@@ -574,10 +583,103 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         }
 
         if (session.expandedFolders && session.expandedFolders.length > 0) {
+            // Pequeno delay para garantir que a árvore de arquivos carregou (se setWorkspace foi chamado antes)
+            // Mas setFiles é síncrono.
             setExpandedFolders(files.value, session.expandedFolders);
         }
+    }
 
-        logger.log('Sessão restaurada');
+    async function restoreSession() {
+        const configStore = useConfigStore();
+        await restoreSessionData(configStore.config.session);
+    }
+
+    async function saveWorkspaceToFile() {
+        try {
+            const { save } = await import('@tauri-apps/plugin-dialog');
+            const { invoke } = await import('@tauri-apps/api/core');
+            const configStore = useConfigStore();
+
+            const sessionData = getSessionData();
+            if (!sessionData) {
+                alert('Nenhum projeto aberto para salvar.');
+                return;
+            }
+
+            // Preparar configuração completa com sessão atualizada
+            const fullConfig = { ...configStore.config };
+            fullConfig.session = sessionData;
+
+            const workspaceData = {
+                projectPath: workspacePath.value,
+                name: workspaceName.value,
+                lastModified: Date.now(),
+                config: fullConfig
+            };
+
+            const path = await save({
+                filters: [{ name: 'Eco Workspace', extensions: ['eco-workspace'] }],
+                defaultPath: `${workspaceName.value}.eco-workspace`
+            });
+
+            if (path) {
+                await invoke('write_file', {
+                    path,
+                    content: JSON.stringify(workspaceData, null, 2)
+                });
+                logger.info('Workspace salvo em:', path);
+            }
+        } catch (e) {
+            logger.error('Erro ao salvar workspace:', e);
+            alert('Erro ao salvar workspace: ' + e);
+        }
+    }
+
+    async function loadWorkspaceFromFile() {
+        try {
+            // Verificar arquivos modificados antes
+            if (await closeWindowWithConfirmation() === false) return;
+
+            const { open } = await import('@tauri-apps/plugin-dialog');
+            const { invoke } = await import('@tauri-apps/api/core');
+            const configStore = useConfigStore();
+
+            const path = await open({
+                multiple: false,
+                filters: [{ name: 'Eco Workspace', extensions: ['eco-workspace'] }]
+            });
+
+            if (path && typeof path === 'string') {
+                const content = await invoke<string>('read_file', { path });
+                const workspaceData = JSON.parse(content);
+
+                if (workspaceData.projectPath) {
+                    await setWorkspace(workspaceData.projectPath, workspaceData.name || 'Workspace');
+
+                    if (workspaceData.config) {
+                        // Restaurar configurações e sessão
+                        configStore.config = workspaceData.config;
+                        // Salvar configurações carregadas no disco local do projeto?
+                        // Opcional, mas faz sentido se o workspace é a fonte da verdade.
+                        await configStore.saveConfig();
+
+                        if (workspaceData.config.session) {
+                            await restoreSessionData(workspaceData.config.session);
+                        }
+                    } else if (workspaceData.session) {
+                        // Compatibilidade retroativa (se houver arquivos antigos, improvável agora mas bom ter)
+                        await restoreSessionData(workspaceData.session);
+                    }
+
+                    logger.info('Workspace carregado de:', path);
+                } else {
+                    throw new Error('Arquivo de workspace inválido');
+                }
+            }
+        } catch (e) {
+            logger.error('Erro ao abrir workspace:', e);
+            alert('Erro ao abrir workspace: ' + e);
+        }
     }
 
     async function closeProject() {
@@ -635,6 +737,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         saveSession,
         restoreSession,
         closeProject,
+        saveWorkspaceToFile,
+        loadWorkspaceFromFile,
+        closeWorkspace: closeProject,
     };
 });
 

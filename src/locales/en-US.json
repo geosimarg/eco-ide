@@ -10,10 +10,13 @@
         "new_window": "New Window",
         "open_file": "Open File",
         "open_folder": "Open Folder",
+        "open_workspace": "Open Workspace",
         "open_recent": "Open Recent",
         "save": "Save",
         "save_as": "Save As",
+        "save_workspace": "Save Workspace As...",
         "close_folder": "Close Folder",
+        "close_workspace": "Close Workspace",
         "exit": "Exit"
     },
     "edit": {

@@ -47,19 +47,26 @@ onMounted(async () => {
   await appWindow.onCloseRequested(async (event) => {
     if (workspaceStore.hasUnsavedChanges) {
       event.preventDefault();
-      const shouldClose = await workspaceStore.closeWindowWithConfirmation();
-      if (!shouldClose) return;
-    }
 
-    if (workspaceStore.workspacePath) {
-      globalConfigStore.setLastWorkspace(workspaceStore.workspacePath);
-      await workspaceStore.saveSession();
-    }
+      const confirmed = await workspaceStore.closeWindowWithConfirmation();
+      if (!confirmed) {
+        // Usuário cancelou
+        return;
+      }
 
-    if (workspaceStore.hasUnsavedChanges) {
-      event.preventDefault();
-    } else {
+      // Salvar sessão antes de sair
+      if (workspaceStore.workspacePath) {
+        globalConfigStore.setLastWorkspace(workspaceStore.workspacePath);
+        await workspaceStore.saveSession();
+      }
+
+      // Forçar destruição da janela
       appWindow.destroy();
+    } else {
+      if (workspaceStore.workspacePath) {
+        globalConfigStore.setLastWorkspace(workspaceStore.workspacePath);
+        await workspaceStore.saveSession();
+      }
     }
   });
 });

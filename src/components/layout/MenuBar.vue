@@ -45,13 +45,21 @@ const menus: { id: string; label: () => string; items: MenuItemShape[] }[] = [
       { type: 'separator' },
       { id: 'open_file', label: () => i18n.t('file.open_file'), action: () => alert('TODO: Open File Dialog') }, // TODO: Implement
       { id: 'open_folder', label: () => i18n.t('file.open_folder'), action: () => document.getElementById('open-folder-btn')?.click() }, // Hack temporário para reusar botão existente
+      { id: 'open_workspace', label: () => i18n.t('file.open_workspace'), action: () => workspaceStore.loadWorkspaceFromFile() },
       { id: 'open_recent', label: () => i18n.t('file.open_recent'), disabled: true },
       { type: 'separator' },
       { id: 'save', label: () => i18n.t('file.save'), action: () => saveCurrentFile() },
       { id: 'save_as', label: () => i18n.t('file.save_as'), disabled: true },
+      { id: 'save_workspace', label: () => i18n.t('file.save_workspace'), action: () => workspaceStore.saveWorkspaceToFile() },
       { type: 'separator' },
       { id: 'close_folder', label: () => i18n.t('file.close_folder'), action: () => workspaceStore.closeProject() },
-      { id: 'exit', label: () => i18n.t('file.exit'), action: () => workspaceStore.closeWindowWithConfirmation() }
+      { id: 'close_workspace', label: () => i18n.t('file.close_workspace'), action: () => workspaceStore.closeWorkspace() },
+      {
+        id: 'exit', label: () => i18n.t('file.exit'), action: async () => {
+          const { getCurrentWindow } = await import('@tauri-apps/api/window');
+          await getCurrentWindow().close();
+        }
+      }
     ]
   },
   {

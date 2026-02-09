@@ -10,10 +10,13 @@
         "new_window": "Nueva Ventana",
         "open_file": "Abrir Archivo",
         "open_folder": "Abrir Carpeta",
+        "open_workspace": "Abrir Espacio de Trabajo",
         "open_recent": "Abrir Reciente",
         "save": "Guardar",
         "save_as": "Guardar Como",
+        "save_workspace": "Guardar Espacio de Trabajo Como...",
         "close_folder": "Cerrar Carpeta",
+        "close_workspace": "Cerrar Espacio de Trabajo",
         "exit": "Salir"
     },
     "edit": {

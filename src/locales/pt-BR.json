@@ -10,10 +10,13 @@
         "new_window": "Nova Janela",
         "open_file": "Abrir Arquivo",
         "open_folder": "Abrir Pasta",
+        "open_workspace": "Abrir Workspace",
         "open_recent": "Abrir Recente",
         "save": "Salvar",
         "save_as": "Salvar Como",
+        "save_workspace": "Salvar Workspace Como...",
         "close_folder": "Fechar Pasta",
+        "close_workspace": "Fechar Workspace",
         "exit": "Sair"
     },
     "edit": {
