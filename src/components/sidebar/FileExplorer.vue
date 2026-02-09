@@ -13,7 +13,28 @@ const workspaceStore = useWorkspaceStore();
 const configStore = useConfigStore();
 const i18n = useI18nStore();
 
-const files = computed(() => workspaceStore.files);
+const files = computed(() => {
+  return filterEntries(workspaceStore.files);
+});
+
+function filterEntries(entries: FileEntry[]): FileEntry[] {
+  return entries.filter(entry => {
+    if (entry.isDirectory) {
+      return !configStore.shouldHideFolder(entry.name);
+    } else {
+      return !configStore.shouldHideFile(entry.name);
+    }
+  }).map(entry => {
+    if (entry.isDirectory && entry.children) {
+      return {
+        ...entry,
+        children: filterEntries(entry.children)
+      };
+    }
+    return entry;
+  });
+}
+
 const workspaceName = computed(() => workspaceStore.workspaceName);
 
 const showNewFileModal = ref(false);

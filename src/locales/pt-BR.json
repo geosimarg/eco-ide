@@ -19,6 +19,15 @@
         "close_workspace": "Fechar Workspace",
         "exit": "Sair"
     },
+    "settings": {
+        "title": "Configurações"
+    },
+    "modal": {
+        "cancel": "Cancelar",
+        "save": "Salvar",
+        "create": "Criar",
+        "discard": "Descartar"
+    },
     "edit": {
         "undo": "Desfazer",
         "redo": "Refazer",

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useI18nStore } from '@/stores/i18n';
+import { useUIStore } from '@/stores/ui';
 import { useWorkspaceStore } from '@/stores/workspace';
 import { logger } from '@/utils/logger';
 
 const i18n = useI18nStore();
+const uiStore = useUIStore();
 const workspaceStore = useWorkspaceStore();
 
 const activeMenu = ref<string | null>(null);
@@ -52,8 +54,9 @@ const menus: { id: string; label: () => string; items: MenuItemShape[] }[] = [
       { id: 'save_as', label: () => i18n.t('file.save_as'), disabled: true },
       { id: 'save_workspace', label: () => i18n.t('file.save_workspace'), action: () => workspaceStore.saveWorkspaceToFile() },
       { type: 'separator' },
-      { id: 'close_folder', label: () => i18n.t('file.close_folder'), action: () => workspaceStore.closeProject() },
-      { id: 'close_workspace', label: () => i18n.t('file.close_workspace'), action: () => workspaceStore.closeWorkspace() },
+      { type: 'separator' },
+      { id: 'settings', label: () => i18n.t('settings.title'), action: () => uiStore.openSettings() },
+      { type: 'separator' },
       {
         id: 'exit', label: () => i18n.t('file.exit'), action: async () => {
           const { getCurrentWindow } = await import('@tauri-apps/api/window');

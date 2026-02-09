@@ -171,11 +171,20 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         }
     }
 
-    function markFileSaved(id: string) {
+    async function markFileSaved(id: string) {
         for (const group of groups.value) {
             const file = group.files.find(f => f.id === id);
             if (file) {
                 file.modified = false;
+
+                // Hook: Se salvou arquivo de configuração, recarregar
+                if (file.path.endsWith('.eco/workspace.json') && workspacePath.value) {
+                    logger.info('Configuração local alterada, recarregando...');
+                    const configStore = useConfigStore();
+                    await configStore.loadConfig(workspacePath.value);
+                }
+
+                // Futuro: Verificar global.json
                 return;
             }
         }

@@ -17,7 +17,17 @@
         "save_workspace": "Save Workspace As...",
         "close_folder": "Close Folder",
         "close_workspace": "Close Workspace",
+        "settings": "Settings",
         "exit": "Exit"
+    },
+    "settings": {
+        "title": "Settings"
+    },
+    "modal": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "create": "Create",
+        "discard": "Discard"
     },
     "edit": {
         "undo": "Undo",

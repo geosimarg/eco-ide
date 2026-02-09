@@ -17,7 +17,17 @@
         "save_workspace": "Guardar Espacio de Trabajo Como...",
         "close_folder": "Cerrar Carpeta",
         "close_workspace": "Cerrar Espacio de Trabajo",
+        "settings": "Configuraciones",
         "exit": "Salir"
+    },
+    "settings": {
+        "title": "Configuraciones"
+    },
+    "modal": {
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "create": "Crear",
+        "discard": "Descartar"
     },
     "edit": {
         "undo": "Deshacer",

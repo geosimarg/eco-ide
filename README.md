@@ -32,7 +32,7 @@ IDE extensível e moderna construída com Tauri, Vue 3 e WebAssembly.
 
 ```bash
 # Clone o repositório
-git clone https://github.com/seu-usuario/eco-ide.git
+git clone https://github.com/geosimarg/eco-ide.git
 cd eco-ide
 
 # Instale as dependências

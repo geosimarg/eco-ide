@@ -8,12 +8,16 @@ export interface GlobalConfig {
     locale: string;
     lastWorkspacePath?: string;
     shouldRestoreSession?: boolean;
+    hidden_files?: string[];
+    hidden_folders?: string[];
 }
 
 export const useGlobalConfigStore = defineStore('globalConfig', () => {
     const configDir = ref<string | null>(null);
     const config = ref<GlobalConfig>({
-        locale: 'pt-BR'
+        locale: 'pt-BR',
+        hidden_files: [],
+        hidden_folders: []
     });
 
     async function loadConfig() {

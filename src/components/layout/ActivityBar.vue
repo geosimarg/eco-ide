@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useUIStore } from '@/stores/ui';
+import { useI18nStore } from '@/stores/i18n';
+
 defineProps<{
   activeView: 'files' | 'search' | 'extensions' | 'git';
 }>();
@@ -6,6 +9,9 @@ defineProps<{
 const emit = defineEmits<{
   select: [view: 'files' | 'search' | 'extensions' | 'git'];
 }>();
+
+const uiStore = useUIStore();
+const i18n = useI18nStore();
 
 const views = [
   { id: 'files' as const, icon: 'files', title: 'Explorador' },
@@ -56,7 +62,7 @@ const views = [
     </div>
 
     <div class="bottom-icons">
-      <button class="activity-btn" title="Configurações">
+      <button class="activity-btn" :title="i18n.t('settings.title')" @click="uiStore.openSettings()">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="12" cy="12" r="3" />
           <path
