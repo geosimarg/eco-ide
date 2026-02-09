@@ -2,43 +2,55 @@
 
 /* ===== CSS Variables ===== */
 :root {
-  /* Colors - Dark Theme (Default) */
-  --bg-primary: #0f0f14;
-  --bg-secondary: #16161e;
-  --bg-tertiary: #1a1a24;
-  --bg-elevated: #1e1e2a;
-  --bg-hover: #252532;
-  --bg-active: #2d2d3d;
+  /* Colors - Dark Tech Professional Theme */
 
-  --text-primary: #e4e4ed;
-  --text-secondary: #9898a6;
-  --text-muted: #6b6b7b;
-  --text-accent: #a78bfa;
+  /* Neutral Scale */
+  --bg-primary: #0B0F14;
+  --bg-secondary: #121821;
+  --bg-tertiary: #182230;
+  --bg-elevated: #1C2633;
+  --bg-hover: #243041;
+  --bg-active: #2E3D50;
 
-  --border-default: #2a2a3a;
-  --border-subtle: #1f1f2d;
-  --border-accent: #6366f1;
+  --text-primary: #E6EDF3;
+  --text-secondary: #9FB0C3;
+  --text-muted: #6B7D8F;
+  --text-accent: #3B82F6;
 
-  /* Accent Colors */
-  --accent-primary: #6366f1;
-  --accent-secondary: #8b5cf6;
-  --accent-gradient: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  --border-default: #243041;
+  --border-subtle: #1C2633;
+  --border-accent: #3B82F6;
+
+  /* Primary - Verde controlado (ações principais, estados positivos) */
+  --accent-primary: #22C55E;
+  --accent-primary-hover: #16A34A;
+
+  /* Secondary - Azul tech (links, elementos interativos secundários) */
+  --accent-secondary: #3B82F6;
+  --accent-secondary-hover: #2563EB;
+
+  /* Accent - Ciano suave (destaques especiais) */
+  --accent-tertiary: #06B6D4;
 
   /* Semantic Colors */
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --error: #ef4444;
-  --info: #3b82f6;
+  --success: #22C55E;
+  --success-muted: rgba(34, 197, 94, 0.15);
+  --warning: #F59E0B;
+  --warning-muted: rgba(245, 158, 11, 0.15);
+  --error: #EF4444;
+  --error-muted: rgba(239, 68, 68, 0.15);
+  --info: #3B82F6;
+  --info-muted: rgba(59, 130, 246, 0.15);
 
-  /* Syntax Highlighting */
-  --syntax-keyword: #c678dd;
-  --syntax-string: #98c379;
-  --syntax-number: #d19a66;
-  --syntax-function: #61afef;
-  --syntax-variable: #e06c75;
-  --syntax-comment: #5c6370;
-  --syntax-operator: #56b6c2;
-  --syntax-type: #e5c07b;
+  /* Syntax Highlighting - Harmonizado */
+  --syntax-keyword: #C678DD;
+  --syntax-string: #22C55E;
+  --syntax-number: #F59E0B;
+  --syntax-function: #3B82F6;
+  --syntax-variable: #E06C75;
+  --syntax-comment: #6B7D8F;
+  --syntax-operator: #06B6D4;
+  --syntax-type: #E5C07B;
 
   /* Layout */
   --sidebar-width: 48px;
@@ -133,7 +145,7 @@ body {
 
 /* ===== Selection ===== */
 ::selection {
-  background: rgba(99, 102, 241, 0.4);
+  background: rgba(34, 197, 94, 0.3);
 }
 
 /* ===== Focus ===== */
@@ -158,12 +170,15 @@ body {
 }
 
 .btn-primary {
-  background: var(--accent-gradient);
-  color: white;
+  background: var(--accent-primary);
+  color: #0B0F14;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
 }
 
 .btn-primary:hover {
-  filter: brightness(1.1);
+  background: var(--accent-primary-hover);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
 }
 
 .btn-secondary {
