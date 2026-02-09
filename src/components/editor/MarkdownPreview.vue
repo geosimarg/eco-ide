@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { watch, ref } from 'vue';
+import { watch, ref, nextTick } from 'vue';
 import { marked } from 'marked';
 
 const props = defineProps<{
     content: string;
+    scrollPercent?: number;
 }>();
 
 const renderedHtml = ref('');
+const previewContentRef = ref<HTMLElement | null>(null);
 
 marked.setOptions({
     breaks: true,
@@ -16,18 +18,25 @@ marked.setOptions({
 watch(() => props.content, async (newContent) => {
     renderedHtml.value = await marked.parse(newContent || '');
 }, { immediate: true });
+
+watch(() => props.scrollPercent, (percent) => {
+    if (percent === undefined || !previewContentRef.value) return;
+
+    nextTick(() => {
+        const el = previewContentRef.value;
+        if (!el) return;
+
+        const scrollHeight = el.scrollHeight - el.clientHeight;
+        if (scrollHeight > 0) {
+            el.scrollTop = percent * scrollHeight;
+        }
+    });
+});
 </script>
 
 <template>
     <div class="markdown-preview">
-        <div class="preview-header">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-            <span>Preview</span>
-        </div>
-        <div class="preview-content" v-html="renderedHtml"></div>
+        <div class="preview-content" ref="previewContentRef" v-html="renderedHtml"></div>
     </div>
 </template>
 
@@ -35,21 +44,9 @@ watch(() => props.content, async (newContent) => {
 .markdown-preview {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    flex: 1;
     background: var(--bg-primary);
     overflow: hidden;
-}
-
-.preview-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    background: var(--bg-tertiary);
-    border-bottom: 1px solid var(--border-subtle);
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-    height: var(--tab-height);
 }
 
 .preview-content {

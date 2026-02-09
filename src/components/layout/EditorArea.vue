@@ -8,6 +8,8 @@ const workspaceStore = useWorkspaceStore();
 const groups = computed(() => workspaceStore.groups);
 
 const previewFileId = ref<string | null>(null);
+const previewScrollPercent = ref(0);
+
 const previewContent = computed(() => {
   if (!previewFileId.value) return '';
   for (const group of groups.value) {
@@ -42,6 +44,13 @@ function handleTogglePreview(fileId: string) {
     previewFileId.value = null;
   } else {
     previewFileId.value = fileId;
+    previewScrollPercent.value = 0;
+  }
+}
+
+function handleEditorScroll(percent: number) {
+  if (previewFileId.value) {
+    previewScrollPercent.value = percent;
   }
 }
 </script>
@@ -50,7 +59,7 @@ function handleTogglePreview(fileId: string) {
   <div class="editor-area">
     <div class="groups-container">
       <EditorGroup v-for="(group, index) in groups" :key="group.id" :group="group" @split="handleSplit(index, $event)"
-        @toggle-preview="handleTogglePreview" />
+        @toggle-preview="handleTogglePreview" @editor-scroll="handleEditorScroll" />
 
       <div v-if="previewFileId" class="preview-pane">
         <div class="preview-header">
@@ -66,7 +75,7 @@ function handleTogglePreview(fileId: string) {
             </svg>
           </button>
         </div>
-        <MarkdownPreview :content="previewContent" />
+        <MarkdownPreview :content="previewContent" :scroll-percent="previewScrollPercent" />
       </div>
     </div>
   </div>

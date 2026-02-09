@@ -26,12 +26,17 @@ const props = defineProps<{
   file: OpenFile;
 }>();
 
+const emit = defineEmits<{
+  scroll: [scrollPercent: number];
+}>();
+
 const editorContainer = ref<HTMLElement | null>(null);
 const workspaceStore = useWorkspaceStore();
 const editorStore = useEditorStore();
 
 let editorView: EditorView | null = null;
 const languageCompartment = new Compartment();
+let scrollDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Tema dark customizado com cores vibrantes (One Dark inspired)
 const darkTheme = EditorView.theme({
@@ -305,10 +310,32 @@ function createEditor() {
     parent: editorContainer.value,
   });
 
-  // Se houver linha/coluna inicial (ex.: resultado da busca), mover cursor e scrollar
+  const scroller = editorView.scrollDOM;
+  scroller.addEventListener('scroll', handleEditorScroll);
+
   if (props.file.initialLine) {
     scheduleApplyInitialPosition();
   }
+}
+
+function handleEditorScroll() {
+  if (!editorView) return;
+
+  if (scrollDebounceTimer) {
+    clearTimeout(scrollDebounceTimer);
+  }
+
+  scrollDebounceTimer = setTimeout(() => {
+    if (!editorView) return;
+    const scroller = editorView.scrollDOM;
+    const scrollTop = scroller.scrollTop;
+    const scrollHeight = scroller.scrollHeight - scroller.clientHeight;
+
+    if (scrollHeight > 0) {
+      const percent = scrollTop / scrollHeight;
+      emit('scroll', percent);
+    }
+  }, 16);
 }
 
 function applyInitialPosition() {

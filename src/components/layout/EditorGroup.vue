@@ -15,7 +15,12 @@ const props = defineProps<{
 const emit = defineEmits<{
     split: [payload: { direction: 'left' | 'right', fileId: string, sourceGroupId: string }];
     'toggle-preview': [fileId: string];
+    'editor-scroll': [scrollPercent: number];
 }>();
+
+function handleEditorScroll(percent: number) {
+    emit('editor-scroll', percent);
+}
 
 const workspaceStore = useWorkspaceStore();
 const draggedIndex = ref<number | null>(null);
@@ -242,7 +247,7 @@ function onDrop(e: DragEvent) {
                 <span v-if="workspaceStore.groups.length > 1">Grupo Vazio</span>
                 <WelcomeScreen v-else />
             </div>
-            <CodeEditor v-else-if="activeFile" :file="activeFile" />
+            <CodeEditor v-else-if="activeFile" :file="activeFile" @scroll="handleEditorScroll" />
         </div>
     </div>
 </template>
