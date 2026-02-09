@@ -38,7 +38,7 @@ async function handleClose() {
   <div class="titlebar" data-tauri-drag-region>
     <div class="titlebar-left" data-tauri-drag-region>
       <img src="/favicon.svg" alt="Eco IDE" class="logo" />
-      <span class="title">Eco IDE</span>
+      <span class="title"></span>
       <div class="menubar-container">
         <MenuBar />
       </div>

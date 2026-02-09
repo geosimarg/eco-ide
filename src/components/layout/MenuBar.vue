@@ -158,7 +158,7 @@ async function openDocs() {
 <template>
   <div class="menubar">
     <div v-for="menu in menus" :key="menu.id" class="menu-item" :class="{ active: activeMenu === menu.id }">
-      <div class="menu-label" @click.stop="toggleMenu(menu.id)">
+      <div class="menu-label no-select" @click.stop="toggleMenu(menu.id)">
         {{ menu.label() }}
       </div>
 
@@ -168,14 +168,14 @@ async function openDocs() {
 
           <div v-else class="dropdown-item" :class="{ disabled: item.disabled, 'has-submenu': item.submenu }"
             @click.stop="!item.submenu && handleAction(item)">
-            <span class="item-label">{{ typeof item.label === 'function' ? item.label() : '' }}</span>
+            <span class="item-label no-select">{{ typeof item.label === 'function' ? item.label() : '' }}</span>
             <span v-if="item.checked && item.checked" class="check">✓</span>
             <span v-if="item.submenu" class="arrow">▶</span>
 
             <!-- Submenu Nível 1 (Simples) -->
             <div v-if="item.submenu" class="submenu">
               <div v-for="sub in item.submenu" :key="sub.id" class="dropdown-item" @click.stop="handleAction(sub)">
-                <span class="item-label">{{ sub.label() }}</span>
+                <span class="item-label no-select">{{ sub.label() }}</span>
                 <span v-if="sub.checked && sub.checked?.()" class="check">✓</span>
               </div>
             </div>

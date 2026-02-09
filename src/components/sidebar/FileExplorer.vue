@@ -203,20 +203,20 @@ function sortFiles(entries: FileEntry[]) {
   <div class="file-explorer">
     <!-- Estado vazio -->
     <div v-if="!workspaceStore.workspacePath" class="empty-state">
-      <p>{{ i18n.t('workspace.no_folder') }}</p>
+      <p class="no-select">{{ i18n.t('workspace.no_folder') }}</p>
       <button class="open-btn" @click="openFolder">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path
             d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V9C21 7.89543 20.1046 7 19 7H12L10 5H5C3.89543 5 3 5.89543 3 7Z" />
         </svg>
-        <span>{{ i18n.t('explorer.open_folder') }}</span>
+        <span class="no-select">{{ i18n.t('explorer.open_folder') }}</span>
       </button>
     </div>
 
     <!-- Árvore de arquivos -->
     <div v-else class="file-tree">
       <div class="tree-header" id="tree-header">
-        <span class="tree-title">{{ workspaceName }}</span>
+        <span class="tree-title no-select">{{ workspaceName }}</span>
         <div class="tree-header-actions">
           <button class="icon-btn" @click="handleCreateFolder(workspaceStore.workspacePath!)"
             :title="i18n.t('explorer.new_folder')">
@@ -226,7 +226,7 @@ function sortFiles(entries: FileEntry[]) {
               <line x1="9" y1="14" x2="15" y2="14" />
             </svg>
           </button>
-          <button class="icon-btn" @click="handleCreateFile(workspaceStore.workspacePath!)"
+          <button class="icon-btn no-select" @click="handleCreateFile(workspaceStore.workspacePath!)"
             :title="i18n.t('explorer.new_file')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -243,10 +243,10 @@ function sortFiles(entries: FileEntry[]) {
           <div class="tree-item" :class="{ directory: entry.isDirectory }" @click="handleFileClick(entry)">
             <FileIcon :name="entry.name" :is-directory="entry.isDirectory" :expanded="entry.expanded"
               class="item-icon" />
-            <span class="item-name">{{ entry.name }}</span>
+            <span class="item-name no-select">{{ entry.name }}</span>
 
-            <button v-if="entry.isDirectory" class="item-action-btn" @click.stop="handleCreateFile(entry.path)"
-              :title="i18n.t('explorer.new_file')">
+            <button v-if="entry.isDirectory" class="item-action-btn no-select"
+              @click.stop="handleCreateFile(entry.path)" :title="i18n.t('explorer.new_file')">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
@@ -262,10 +262,10 @@ function sortFiles(entries: FileEntry[]) {
               :class="{ directory: child.isDirectory }" @click="handleFileClick(child)">
               <FileIcon :name="child.name" :is-directory="child.isDirectory" :expanded="child.expanded"
                 class="item-icon" />
-              <span class="item-name">{{ child.name }}</span>
+              <span class="item-name no-select">{{ child.name }}</span>
 
-              <button v-if="child.isDirectory" class="item-action-btn" @click.stop="handleCreateFile(child.path)"
-                :title="i18n.t('explorer.new_file')">
+              <button v-if="child.isDirectory" class="item-action-btn no-select"
+                @click.stop="handleCreateFile(child.path)" :title="i18n.t('explorer.new_file')">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <polyline points="14 2 14 8 20 8" />

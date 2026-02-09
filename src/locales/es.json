@@ -13,6 +13,7 @@
         "open_recent": "Abrir Reciente",
         "save": "Guardar",
         "save_as": "Guardar Como",
+        "close_folder": "Cerrar Carpeta",
         "exit": "Salir"
     },
     "edit": {
@@ -74,5 +75,20 @@
         "results_found": "{count} resultados encontrados",
         "file": "Archivo",
         "line": "Línea"
+    },
+    "welcome": {
+        "title": "Eco IDE",
+        "subtitle": "IDE extensível com WebAssembly",
+        "open_folder": "Abrir Carpeta",
+        "open_file": "Abrir Archivo",
+        "all_files": "Todos los archivos",
+        "new_file": "Nuevo Archivo",
+        "documentation": "Documentación",
+        "shortcuts": "Atajos Rápidos",
+        "go_to_file": "Ir para archivo",
+        "command_palette": "Paleta de comandos",
+        "search_files": "Buscar en archivos",
+        "integrated_terminal": "Terminal integrado",
+        "select_a_folder": "Seleccione una carpeta"
     }
 }
