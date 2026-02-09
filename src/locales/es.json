@@ -53,6 +53,16 @@
         "open_folder": "Abrir Carpeta",
         "title": "Explorador"
     },
+    "context": {
+        "new_file": "Nuevo Archivo",
+        "new_folder": "Nueva Carpeta",
+        "copy": "Copiar",
+        "cut": "Cortar",
+        "paste": "Pegar",
+        "rename": "Renombrar",
+        "delete": "Eliminar",
+        "confirm_delete": "¿Está seguro de que desea eliminar \"{name}\"?"
+    },
     "new_folder_modal": {
         "title": "Nueva Carpeta",
         "create_in": "Crear en:",

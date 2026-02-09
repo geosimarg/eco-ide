@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { useWorkspaceStore, type FileEntry } from '@/stores/workspace';
 import { useConfigStore } from '@/stores/config';
 import { useI18nStore } from '@/stores/i18n';
@@ -7,6 +7,7 @@ import { logger } from '@/utils/logger';
 import NewFileModal from '@/components/modals/NewFileModal.vue';
 import NewFolderModal from '@/components/modals/NewFolderModal.vue';
 import FileIcon from '@/components/common/FileIcon.vue';
+import ContextMenu, { type ContextMenuItem } from '@/components/common/ContextMenu.vue';
 
 const workspaceStore = useWorkspaceStore();
 const configStore = useConfigStore();
@@ -15,18 +16,24 @@ const i18n = useI18nStore();
 const files = computed(() => workspaceStore.files);
 const workspaceName = computed(() => workspaceStore.workspaceName);
 
-// Estado dos modais
 const showNewFileModal = ref(false);
 const newFileParentPath = ref('');
 const showNewFolderModal = ref(false);
 const newFolderParentPath = ref('');
+
+const contextMenu = ref({ visible: false, x: 0, y: 0 });
+const contextMenuEntry = ref<FileEntry | null>(null);
+
+const clipboard = ref<{ entry: FileEntry; action: 'copy' | 'cut' } | null>(null);
+
+const renamingEntry = ref<FileEntry | null>(null);
+const renameInputValue = ref('');
 
 const newFileParentPathRelative = computed(() => {
   if (!workspaceStore.workspacePath || !newFileParentPath.value) return '';
   if (newFileParentPath.value === workspaceStore.workspacePath) return './';
   if (newFileParentPath.value.startsWith(workspaceStore.workspacePath)) {
     let rel = newFileParentPath.value.slice(workspaceStore.workspacePath.length);
-    // Remove barras iniciais
     rel = rel.replace(/^[/\\]+/, '');
     return rel || './';
   }
@@ -44,6 +51,30 @@ const newFolderParentPathRelative = computed(() => {
   return newFolderParentPath.value;
 });
 
+const contextMenuItems = computed<ContextMenuItem[]>(() => {
+  const entry = contextMenuEntry.value;
+  const items: ContextMenuItem[] = [];
+
+  if (entry?.isDirectory) {
+    items.push({ id: 'new_file', label: i18n.t('context.new_file') });
+    items.push({ id: 'new_folder', label: i18n.t('context.new_folder') });
+    items.push({ id: 'divider1', label: '', divider: true });
+  }
+
+  items.push({ id: 'copy', label: i18n.t('context.copy') });
+  items.push({ id: 'cut', label: i18n.t('context.cut') });
+
+  if (entry?.isDirectory && clipboard.value) {
+    items.push({ id: 'paste', label: i18n.t('context.paste') });
+  }
+
+  items.push({ id: 'divider2', label: '', divider: true });
+  items.push({ id: 'rename', label: i18n.t('context.rename') });
+  items.push({ id: 'delete', label: i18n.t('context.delete') });
+
+  return items;
+});
+
 async function openFolder() {
   try {
     const { open } = await import('@tauri-apps/plugin-dialog');
@@ -52,7 +83,6 @@ async function openFolder() {
       multiple: false,
       title: i18n.t('explorer.open_folder'),
     });
-
     if (selected && typeof selected === 'string') {
       await workspaceStore.openFolder(selected);
       await configStore.loadConfig(selected);
@@ -62,28 +92,179 @@ async function openFolder() {
   }
 }
 
-
-
 async function handleFileClick(entry: FileEntry) {
+  if (renamingEntry.value) return;
+
   if (entry.isDirectory) {
     workspaceStore.toggleDirectory(entry.path);
-    // TODO: carregar filhos se necessário
   } else {
     try {
       const { invoke } = await import('@tauri-apps/api/core');
       const content = await invoke<string>('read_file', { path: entry.path });
-      workspaceStore.openFile({
-        name: entry.name,
-        path: entry.path,
-        content,
-      });
+      workspaceStore.openFile({ name: entry.name, path: entry.path, content });
     } catch (error) {
       logger.error('Erro ao abrir arquivo:', error);
     }
   }
 }
 
+async function handleContextMenu(e: MouseEvent, entry: FileEntry) {
+  e.preventDefault();
+  e.stopPropagation();
+  logger.info('Opening context menu for:', entry.path);
 
+  if (contextMenu.value.visible) {
+    contextMenu.value.visible = false;
+    await nextTick();
+  }
+
+  contextMenuEntry.value = entry;
+  contextMenu.value = { visible: true, x: e.clientX, y: e.clientY };
+}
+
+function closeContextMenu() {
+  contextMenu.value.visible = false;
+  contextMenuEntry.value = null;
+}
+
+async function handleContextAction(actionId: string) {
+  const entry = contextMenuEntry.value;
+  if (!entry) return;
+
+  switch (actionId) {
+    case 'new_file':
+      handleCreateFile(entry.path);
+      break;
+    case 'new_folder':
+      handleCreateFolder(entry.path);
+      break;
+    case 'copy':
+      clipboard.value = { entry, action: 'copy' };
+      break;
+    case 'cut':
+      clipboard.value = { entry, action: 'cut' };
+      break;
+    case 'paste':
+      await handlePaste(entry.path);
+      break;
+    case 'rename':
+      startRename(entry);
+      break;
+    case 'delete':
+      await handleDelete(entry);
+      break;
+  }
+}
+
+function startRename(entry: FileEntry) {
+  renamingEntry.value = entry;
+  renameInputValue.value = entry.name;
+}
+
+async function finishRename() {
+  if (!renamingEntry.value || !renameInputValue.value.trim()) {
+    renamingEntry.value = null;
+    return;
+  }
+
+  const oldPath = renamingEntry.value.path;
+  const separator = navigator.userAgent.includes('Windows') ? '\\' : '/';
+  const parentPath = oldPath.substring(0, oldPath.lastIndexOf(separator));
+  const newPath = `${parentPath}${separator}${renameInputValue.value.trim()}`;
+
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    await invoke('rename_path', { oldPath, newPath });
+
+    renamingEntry.value.name = renameInputValue.value.trim();
+    renamingEntry.value.path = newPath;
+
+    workspaceStore.updateFilePath(oldPath, newPath, renameInputValue.value.trim());
+  } catch (e) {
+    logger.error('Erro ao renomear:', e);
+    alert('Erro ao renomear: ' + e);
+  }
+
+  renamingEntry.value = null;
+}
+
+async function handlePaste(targetPath: string) {
+  if (!clipboard.value) return;
+
+  const { entry, action } = clipboard.value;
+  const separator = navigator.userAgent.includes('Windows') ? '\\' : '/';
+  const destPath = `${targetPath}${separator}${entry.name}`;
+
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+
+    if (action === 'copy') {
+      await invoke('copy_path', { source: entry.path, destination: destPath });
+    } else {
+      await invoke('rename_path', { oldPath: entry.path, newPath: destPath });
+      removeEntryFromTree(entry.path);
+      clipboard.value = null;
+    }
+
+    const newEntry: FileEntry = {
+      ...entry,
+      path: destPath,
+    };
+
+    addEntryToTree(targetPath, newEntry);
+
+  } catch (e) {
+    logger.error('Erro ao colar:', e);
+    alert('Erro ao colar: ' + e);
+  }
+}
+
+async function handleDelete(entry: FileEntry) {
+  const confirmMsg = i18n.t('context.confirm_delete').replace('{name}', entry.name);
+  if (!confirm(confirmMsg)) return;
+
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    await invoke('delete_path', { path: entry.path });
+    removeEntryFromTree(entry.path);
+
+    if (!entry.isDirectory) {
+      workspaceStore.closeFileByPath(entry.path);
+    }
+  } catch (e) {
+    logger.error('Erro ao excluir:', e);
+    alert('Erro ao excluir: ' + e);
+  }
+}
+
+function removeEntryFromTree(path: string) {
+  function remove(entries: FileEntry[]): boolean {
+    const idx = entries.findIndex(e => e.path === path);
+    if (idx >= 0) {
+      entries.splice(idx, 1);
+      return true;
+    }
+    for (const e of entries) {
+      if (e.children && remove(e.children)) return true;
+    }
+    return false;
+  }
+  remove(workspaceStore.files);
+}
+
+function addEntryToTree(parentPath: string, entry: FileEntry) {
+  if (parentPath === workspaceStore.workspacePath) {
+    workspaceStore.files.push(entry);
+    sortFiles(workspaceStore.files);
+  } else {
+    const parent = findEntry(workspaceStore.files, parentPath);
+    if (parent?.children) {
+      parent.children.push(entry);
+      sortFiles(parent.children);
+      parent.expanded = true;
+    }
+  }
+}
 
 function handleCreateFolder(parentPath: string) {
   newFolderParentPath.value = parentPath;
@@ -98,42 +279,16 @@ function handleCreateFile(parentPath: string) {
 async function handleModalCreate(fileName: string) {
   showNewFileModal.value = false;
   const parentPath = newFileParentPath.value;
-
   const separator = navigator.userAgent.includes('Windows') ? '\\' : '/';
-  const fullPath = parentPath.endsWith(separator)
-    ? `${parentPath}${fileName}`
-    : `${parentPath}${separator}${fileName}`;
+  const fullPath = parentPath.endsWith(separator) ? `${parentPath}${fileName}` : `${parentPath}${separator}${fileName}`;
 
   try {
     const { invoke } = await import('@tauri-apps/api/core');
     await invoke('create_file', { path: fullPath });
 
-    const newEntry: FileEntry = {
-      name: fileName,
-      path: fullPath,
-      isDirectory: false,
-      children: undefined,
-      expanded: undefined
-    };
-
-    if (parentPath === workspaceStore.workspacePath) {
-      workspaceStore.files.push(newEntry);
-      sortFiles(workspaceStore.files);
-    } else {
-      const parent = findEntry(workspaceStore.files, parentPath);
-      if (parent && parent.children) {
-        parent.children.push(newEntry);
-        sortFiles(parent.children);
-        parent.expanded = true;
-      }
-    }
-
-    workspaceStore.openFile({
-      name: fileName,
-      path: fullPath,
-      content: ''
-    });
-
+    const newEntry: FileEntry = { name: fileName, path: fullPath, isDirectory: false, children: undefined, expanded: undefined };
+    addEntryToTree(parentPath, newEntry);
+    workspaceStore.openFile({ name: fileName, path: fullPath, content: '' });
   } catch (e) {
     logger.error('Erro ao criar arquivo:', e);
     alert('Erro ao criar arquivo: ' + e);
@@ -143,35 +298,15 @@ async function handleModalCreate(fileName: string) {
 async function handleModalCreateFolder(folderName: string) {
   showNewFolderModal.value = false;
   const parentPath = newFolderParentPath.value;
-
   const separator = navigator.userAgent.includes('Windows') ? '\\' : '/';
-  const fullPath = parentPath.endsWith(separator)
-    ? `${parentPath}${folderName}`
-    : `${parentPath}${separator}${folderName}`;
+  const fullPath = parentPath.endsWith(separator) ? `${parentPath}${folderName}` : `${parentPath}${separator}${folderName}`;
 
   try {
     const { invoke } = await import('@tauri-apps/api/core');
     await invoke('create_directory', { path: fullPath });
 
-    const newEntry: FileEntry = {
-      name: folderName,
-      path: fullPath,
-      isDirectory: true,
-      children: [],
-      expanded: false
-    };
-
-    if (parentPath === workspaceStore.workspacePath) {
-      workspaceStore.files.push(newEntry);
-      sortFiles(workspaceStore.files);
-    } else {
-      const parent = findEntry(workspaceStore.files, parentPath);
-      if (parent && parent.children) {
-        parent.children.push(newEntry);
-        sortFiles(parent.children);
-        parent.expanded = true;
-      }
-    }
+    const newEntry: FileEntry = { name: folderName, path: fullPath, isDirectory: true, children: [], expanded: false };
+    addEntryToTree(parentPath, newEntry);
   } catch (e) {
     logger.error('Erro ao criar pasta:', e);
     alert('Erro ao criar pasta: ' + e);
@@ -191,9 +326,7 @@ function findEntry(entries: FileEntry[], path: string): FileEntry | null {
 
 function sortFiles(entries: FileEntry[]) {
   entries.sort((a, b) => {
-    if (a.isDirectory === b.isDirectory) {
-      return a.name.localeCompare(b.name);
-    }
+    if (a.isDirectory === b.isDirectory) return a.name.localeCompare(b.name);
     return a.isDirectory ? -1 : 1;
   });
 }
@@ -240,12 +373,15 @@ function sortFiles(entries: FileEntry[]) {
 
       <div class="tree-content">
         <template v-for="entry in files" :key="entry.path">
-          <div class="tree-item" :class="{ directory: entry.isDirectory }" @click="handleFileClick(entry)">
+          <div class="tree-item" :class="{ directory: entry.isDirectory, renaming: renamingEntry?.path === entry.path }"
+            @click="handleFileClick(entry)" @contextmenu="handleContextMenu($event, entry)">
             <FileIcon :name="entry.name" :is-directory="entry.isDirectory" :expanded="entry.expanded"
               class="item-icon" />
-            <span class="item-name no-select">{{ entry.name }}</span>
-
-            <button v-if="entry.isDirectory" class="item-action-btn no-select"
+            <input v-if="renamingEntry?.path === entry.path" v-model="renameInputValue" class="rename-input"
+              @blur="finishRename" @keyup.enter="finishRename" @keyup.escape="renamingEntry = null" @click.stop
+              autofocus />
+            <span v-else class="item-name no-select">{{ entry.name }}</span>
+            <button v-if="entry.isDirectory && !renamingEntry" class="item-action-btn no-select"
               @click.stop="handleCreateFile(entry.path)" :title="i18n.t('explorer.new_file')">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -259,12 +395,15 @@ function sortFiles(entries: FileEntry[]) {
           <!-- Filhos expandidos -->
           <template v-if="entry.isDirectory && entry.expanded && entry.children">
             <div v-for="child in entry.children" :key="child.path" class="tree-item nested"
-              :class="{ directory: child.isDirectory }" @click="handleFileClick(child)">
+              :class="{ directory: child.isDirectory, renaming: renamingEntry?.path === child.path }"
+              @click="handleFileClick(child)" @contextmenu="handleContextMenu($event, child)">
               <FileIcon :name="child.name" :is-directory="child.isDirectory" :expanded="child.expanded"
                 class="item-icon" />
-              <span class="item-name no-select">{{ child.name }}</span>
-
-              <button v-if="child.isDirectory" class="item-action-btn no-select"
+              <input v-if="renamingEntry?.path === child.path" v-model="renameInputValue" class="rename-input"
+                @blur="finishRename" @keyup.enter="finishRename" @keyup.escape="renamingEntry = null" @click.stop
+                autofocus />
+              <span v-else class="item-name no-select">{{ child.name }}</span>
+              <button v-if="child.isDirectory && !renamingEntry" class="item-action-btn no-select"
                 @click.stop="handleCreateFile(child.path)" :title="i18n.t('explorer.new_file')">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -283,6 +422,9 @@ function sortFiles(entries: FileEntry[]) {
       @create="handleModalCreateFolder" @cancel="showNewFolderModal = false" />
     <NewFileModal :visible="showNewFileModal" :parent-path="newFileParentPathRelative" @create="handleModalCreate"
       @cancel="showNewFileModal = false" />
+
+    <ContextMenu :visible="contextMenu.visible" :x="contextMenu.x" :y="contextMenu.y" :items="contextMenuItems"
+      @select="handleContextAction" @close="closeContextMenu" />
   </div>
 </template>
 
@@ -415,5 +557,20 @@ function sortFiles(entries: FileEntry[]) {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
+}
+
+.rename-input {
+  flex: 1;
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent-primary);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  padding: 2px 4px;
+  outline: none;
+}
+
+.tree-item.renaming {
+  background: var(--bg-hover);
 }
 </style>

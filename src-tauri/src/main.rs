@@ -146,6 +146,44 @@ fn rename_path(old_path: String, new_path: String) -> Result<(), AppError> {
     Ok(())
 }
 
+/// Copia um arquivo ou diretório para um novo destino
+#[tauri::command]
+fn copy_path(source: String, destination: String) -> Result<(), AppError> {
+    let src_path = Path::new(&source);
+    let dest_path = Path::new(&destination);
+    
+    if !src_path.exists() {
+        return Err(AppError::InvalidPath(format!("Origem não existe: {}", source)));
+    }
+    
+    if src_path.is_file() {
+        fs::copy(src_path, dest_path)?;
+    } else if src_path.is_dir() {
+        copy_dir_recursive(src_path, dest_path)?;
+    }
+    
+    Ok(())
+}
+
+fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<(), AppError> {
+    fs::create_dir_all(dst)?;
+    
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let src_child = entry.path();
+        let dst_child = dst.join(entry.file_name());
+        
+        if src_child.is_dir() {
+            copy_dir_recursive(&src_child, &dst_child)?;
+        } else {
+            fs::copy(&src_child, &dst_child)?;
+        }
+    }
+    
+    Ok(())
+}
+
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SearchResult {
     pub file: String,
@@ -286,6 +324,7 @@ fn main() {
             create_directory,
             delete_path,
             rename_path,
+            copy_path,
             search_files,
             get_app_config_dir,
         ])

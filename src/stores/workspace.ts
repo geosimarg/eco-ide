@@ -411,6 +411,27 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         group.files.splice(toIndex, 0, file);
     }
 
+    function updateFilePath(oldPath: string, newPath: string, newName: string) {
+        for (const group of groups.value) {
+            const file = group.files.find(f => f.path === oldPath);
+            if (file) {
+                file.path = newPath;
+                file.name = newName;
+                break;
+            }
+        }
+    }
+
+    function closeFileByPath(path: string) {
+        for (const group of groups.value) {
+            const file = group.files.find(f => f.path === path);
+            if (file) {
+                closeFile(file.id);
+                break;
+            }
+        }
+    }
+
     // Refatorado para usar openFiles computed (que já agrega tudo)
     async function closeWindowWithConfirmation(): Promise<boolean> {
         const modifiedFiles = openFiles.value.filter(f => f.modified);
@@ -596,6 +617,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         closeGroup,
         moveFileToGroup,
         reorderFile,
+        updateFilePath,
+        closeFileByPath,
         saveSession,
         restoreSession,
         closeProject,

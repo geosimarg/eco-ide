@@ -53,6 +53,16 @@
         "open_folder": "Abrir Pasta",
         "title": "Explorador"
     },
+    "context": {
+        "new_file": "Novo Arquivo",
+        "new_folder": "Nova Pasta",
+        "copy": "Copiar",
+        "cut": "Recortar",
+        "paste": "Colar",
+        "rename": "Renomear",
+        "delete": "Excluir",
+        "confirm_delete": "Tem certeza que deseja excluir \"{name}\"?"
+    },
     "new_folder_modal": {
         "title": "Nova Pasta",
         "create_in": "Criar em:",
