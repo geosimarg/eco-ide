@@ -77,7 +77,7 @@ async function handleDocumentation() {
 </script>
 
 <template>
-  <div class="welcome-screen">
+  <div class="welcome-screen no-select">
     <div class="welcome-content">
       <img src="/favicon.svg" alt="Eco IDE" class="logo" />
       <h1 class="title">Eco IDE</h1>

@@ -181,20 +181,33 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         }
     }
 
-    function toggleDirectory(path: string) {
-        function findAndToggle(entries: FileEntry[]): boolean {
+    async function toggleDirectory(path: string) {
+        async function findAndToggle(entries: FileEntry[]): Promise<boolean> {
             for (const entry of entries) {
                 if (entry.path === path && entry.isDirectory) {
                     entry.expanded = !entry.expanded;
+
+                    // Se expandiu e não tem filhos carregados, carregar
+                    if (entry.expanded && (!entry.children || entry.children.length === 0)) {
+                        try {
+                            const { invoke } = await import('@tauri-apps/api/core');
+                            const children = await invoke<FileEntry[]>('list_directory', { path: entry.path });
+                            entry.children = children;
+                        } catch (error) {
+                            logger.error('Erro ao listar diretório na expansão:', error);
+                            // Reverter expansão em caso de erro? Ou deixar vazio?
+                            // Deixar expandido mas vazio mostra que tentou.
+                        }
+                    }
                     return true;
                 }
-                if (entry.children && findAndToggle(entry.children)) {
+                if (entry.children && await findAndToggle(entry.children)) {
                     return true;
                 }
             }
             return false;
         }
-        findAndToggle(files.value);
+        await findAndToggle(files.value);
     }
 
     async function openFolder(path: string) {
