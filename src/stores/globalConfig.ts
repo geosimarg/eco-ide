@@ -6,6 +6,8 @@ const GLOBAL_CONFIG_FILE = 'global.json';
 
 export interface GlobalConfig {
     locale: string;
+    lastWorkspacePath?: string;
+    shouldRestoreSession?: boolean;
 }
 
 export const useGlobalConfigStore = defineStore('globalConfig', () => {
@@ -58,10 +60,24 @@ export const useGlobalConfigStore = defineStore('globalConfig', () => {
         saveConfig();
     }
 
+    function setLastWorkspace(path: string) {
+        config.value.lastWorkspacePath = path;
+        config.value.shouldRestoreSession = true;
+        saveConfig();
+    }
+
+    function clearSession() {
+        config.value.shouldRestoreSession = false;
+        config.value.lastWorkspacePath = undefined;
+        saveConfig();
+    }
+
     return {
         config,
         loadConfig,
         saveConfig,
-        setLocale
+        setLocale,
+        setLastWorkspace,
+        clearSession
     };
 });

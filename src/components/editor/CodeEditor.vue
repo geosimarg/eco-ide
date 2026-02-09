@@ -72,6 +72,20 @@ const darkTheme = EditorView.theme({
   '.cm-lineNumbers .cm-gutterElement': {
     paddingLeft: '16px',
     minWidth: '40px',
+    userSelect: 'none!important',
+    WebkitUserSelect: 'none!important',
+    MozUserSelect: 'none!important',
+    MsUserSelect: 'none!important',
+    OUserSelect: 'none!important',
+    KhtmlUserSelect: 'none!important',
+  },
+  '.line': {
+    userSelect: 'none!important',
+    WebkitUserSelect: 'none!important',
+    MozUserSelect: 'none!important',
+    MsUserSelect: 'none!important',
+    OUserSelect: 'none!important',
+    KhtmlUserSelect: 'none!important',
   },
   '.cm-foldGutter': {
     width: '16px',

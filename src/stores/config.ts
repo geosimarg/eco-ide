@@ -5,9 +5,27 @@ import { logger } from '@/utils/logger';
 const editorFolder = '.eco';
 const configFile = 'workspace.json';
 
+export interface SessionFile {
+    path: string;
+    language?: string;
+}
+
+export interface SessionGroup {
+    id: string;
+    files: SessionFile[];
+    activeFilePath?: string;
+}
+
+export interface SessionData {
+    groups: SessionGroup[];
+    activeGroupId: string;
+    expandedFolders: string[];
+}
+
 export interface WorkspaceConfig {
-    languageOverrides: Record<string, string>; // path -> language
+    languageOverrides: Record<string, string>;
     locale?: string;
+    session?: SessionData;
 }
 
 export const useConfigStore = defineStore('config', () => {

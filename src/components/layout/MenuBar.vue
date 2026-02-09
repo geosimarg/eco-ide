@@ -50,6 +50,7 @@ const menus: { id: string; label: () => string; items: MenuItemShape[] }[] = [
       { id: 'save', label: () => i18n.t('file.save'), action: () => saveCurrentFile() },
       { id: 'save_as', label: () => i18n.t('file.save_as'), disabled: true },
       { type: 'separator' },
+      { id: 'close_folder', label: () => i18n.t('file.close_folder'), action: () => workspaceStore.closeProject() },
       { id: 'exit', label: () => i18n.t('file.exit'), action: () => workspaceStore.closeWindowWithConfirmation() }
     ]
   },

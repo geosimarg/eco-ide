@@ -1,45 +1,33 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import EditorTab from '@/components/editor/EditorTab.vue';
-import CodeEditor from '@/components/editor/CodeEditor.vue';
-import WelcomeScreen from '@/components/editor/WelcomeScreen.vue';
+import { computed } from 'vue';
 import { useWorkspaceStore } from '@/stores/workspace';
+import EditorGroup from '@/components/layout/EditorGroup.vue';
 
 const workspaceStore = useWorkspaceStore();
+const groups = computed(() => workspaceStore.groups);
 
-const openTabs = computed(() => workspaceStore.openFiles);
-const activeTabId = computed(() => workspaceStore.activeFileId);
+function handleSplit(index: number, payload: { direction: 'left' | 'right', fileId: string, sourceGroupId: string }) {
+  const { direction, fileId } = payload;
 
-function selectTab(id: string) {
-  workspaceStore.setActiveFile(id);
-}
+  // Determine insertion index
+  let insertIndex = index;
+  if (direction === 'right') {
+    insertIndex = index + 1;
+  }
 
-function closeTab(id: string) {
-  workspaceStore.closeFile(id);
+  // Create new group at index
+  const newGroupId = workspaceStore.createGroup(undefined, insertIndex);
+
+  // Move file to new group
+  workspaceStore.moveFileToGroup(fileId, newGroupId);
 }
 </script>
 
 <template>
   <div class="editor-area">
-    <!-- Tabs -->
-    <div class="tabs-container" v-if="openTabs.length > 0">
-      <EditorTab
-        v-for="tab in openTabs"
-        :key="tab.id"
-        :file="tab"
-        :active="tab.id === activeTabId"
-        @select="selectTab(tab.id)"
-        @close="closeTab(tab.id)"
-      />
-    </div>
-
-    <!-- Editor Content -->
-    <div class="editor-content">
-      <WelcomeScreen v-if="openTabs.length === 0" />
-      <CodeEditor
-        v-else
-        :file="workspaceStore.activeFile!"
-      />
+    <div class="groups-container">
+      <EditorGroup v-for="(group, index) in groups" :key="group.id" :group="group"
+        @split="handleSplit(index, $event)" />
     </div>
   </div>
 </template>
@@ -53,21 +41,11 @@ function closeTab(id: string) {
   overflow: hidden;
 }
 
-.tabs-container {
+.groups-container {
   display: flex;
-  align-items: center;
-  height: var(--tab-height);
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-subtle);
-  overflow-x: auto;
-}
-
-.tabs-container::-webkit-scrollbar {
-  height: 3px;
-}
-
-.editor-content {
   flex: 1;
+  flex-direction: row;
+  /* Default split direction */
   overflow: hidden;
 }
 </style>

@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useWorkspaceStore } from '@/stores/workspace';
 import { useI18nStore } from '@/stores/i18n';
+import { useGlobalConfigStore } from '@/stores/globalConfig';
+import { useConfigStore } from '@/stores/config';
 import ActivityBar from '@/components/layout/ActivityBar.vue';
 import Sidebar from '@/components/layout/Sidebar.vue';
 import EditorArea from '@/components/layout/EditorArea.vue';
@@ -12,8 +14,9 @@ import UnsavedChangesModal from '@/components/modals/UnsavedChangesModal.vue';
 
 const workspaceStore = useWorkspaceStore();
 const i18nStore = useI18nStore();
+const globalConfigStore = useGlobalConfigStore();
+const configStore = useConfigStore();
 
-// Estado dos painéis
 const sidebarVisible = ref(true);
 const activeView = ref<'files' | 'search' | 'extensions' | 'git'>('files');
 
@@ -31,19 +34,31 @@ function setActiveView(view: typeof activeView.value) {
 }
 
 onMounted(async () => {
-  // Inicializar idioma
   await i18nStore.initLocale();
+  await globalConfigStore.loadConfig();
+
+  if (globalConfigStore.config.shouldRestoreSession && globalConfigStore.config.lastWorkspacePath) {
+    await workspaceStore.openFolder(globalConfigStore.config.lastWorkspacePath);
+    await configStore.loadConfig(globalConfigStore.config.lastWorkspacePath);
+    await workspaceStore.restoreSession();
+  }
 
   const appWindow = getCurrentWindow();
   await appWindow.onCloseRequested(async (event) => {
-    if (!workspaceStore.hasUnsavedChanges) {
-      return;
+    if (workspaceStore.hasUnsavedChanges) {
+      event.preventDefault();
+      const shouldClose = await workspaceStore.closeWindowWithConfirmation();
+      if (!shouldClose) return;
     }
 
-    event.preventDefault();
-    const shouldClose = await workspaceStore.closeWindowWithConfirmation();
+    if (workspaceStore.workspacePath) {
+      globalConfigStore.setLastWorkspace(workspaceStore.workspacePath);
+      await workspaceStore.saveSession();
+    }
 
-    if (shouldClose) {
+    if (workspaceStore.hasUnsavedChanges) {
+      event.preventDefault();
+    } else {
       appWindow.destroy();
     }
   });

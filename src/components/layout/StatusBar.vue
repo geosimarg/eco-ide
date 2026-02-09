@@ -118,7 +118,7 @@ async function handleOpenFolder() {
   height: var(--statusbar-height);
   padding: 0 var(--space-sm);
   background: var(--accent-primary);
-  color: white;
+  color: black;
 }
 
 .statusbar-left,
@@ -135,7 +135,7 @@ async function handleOpenFolder() {
   padding: 0 var(--space-sm);
   height: var(--statusbar-height);
   font-size: var(--font-size-xs);
-  color: rgba(255, 255, 255, 0.9);
+  color: #000000;
   background: transparent;
   border: none;
   cursor: pointer;

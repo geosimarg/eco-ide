@@ -5,7 +5,9 @@ import { invoke } from '@tauri-apps/api/core';
 import { useWorkspaceStore } from '@/stores/workspace';
 import { useConfigStore } from '@/stores/config';
 import { logger } from '@/utils/logger';
+import { useI18nStore } from '@/stores/i18n';
 
+const i18n = useI18nStore();
 const workspaceStore = useWorkspaceStore();
 const configStore = useConfigStore();
 
@@ -14,7 +16,7 @@ async function handleOpenFolder() {
     const selected = await open({
       directory: true,
       multiple: false,
-      title: 'Selecione uma pasta'
+      title: i18n.t('welcome.select_a_folder')
     });
 
     if (selected && typeof selected === 'string') {
@@ -31,9 +33,9 @@ async function handleOpenFile() {
     const selected = await open({
       directory: false,
       multiple: false,
-      title: 'Abrir arquivo',
+      title: i18n.t('welcome.open_file'),
       filters: [
-        { name: 'Todos os arquivos', extensions: ['*'] },
+        { name: i18n.t('welcome.all_files'), extensions: ['*'] },
         { name: 'TypeScript', extensions: ['ts', 'tsx'] },
         { name: 'JavaScript', extensions: ['js', 'jsx'] },
         { name: 'Vue', extensions: ['vue'] },
@@ -79,7 +81,7 @@ async function handleDocumentation() {
     <div class="welcome-content">
       <img src="/favicon.svg" alt="Eco IDE" class="logo" />
       <h1 class="title">Eco IDE</h1>
-      <p class="subtitle">IDE extensível com WebAssembly</p>
+      <p class="subtitle">{{ i18n.t('welcome.subtitle') }}</p>
 
       <div class="actions">
         <button class="action-btn primary" @click="handleOpenFolder">
@@ -87,7 +89,7 @@ async function handleDocumentation() {
             <path
               d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V9C21 7.89543 20.1046 7 19 7H12L10 5H5C3.89543 5 3 5.89543 3 7Z" />
           </svg>
-          <span>Abrir Pasta</span>
+          <span>{{ i18n.t('welcome.open_folder') }}</span>
         </button>
 
         <button class="action-btn" @click="handleOpenFile">
@@ -95,7 +97,7 @@ async function handleDocumentation() {
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" />
           </svg>
-          <span>Abrir Arquivo</span>
+          <span>{{ i18n.t('welcome.open_file') }}</span>
         </button>
 
         <button class="action-btn" @click="handleNewFile">
@@ -105,7 +107,7 @@ async function handleDocumentation() {
             <line x1="12" y1="18" x2="12" y2="12" />
             <line x1="9" y1="15" x2="15" y2="15" />
           </svg>
-          <span>Novo Arquivo</span>
+          <span>{{ i18n.t('welcome.new_file') }}</span>
         </button>
 
         <button class="action-btn" @click="handleDocumentation">
@@ -114,28 +116,28 @@ async function handleDocumentation() {
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <span>Documentação</span>
+          <span>{{ i18n.t('welcome.documentation') }}</span>
         </button>
       </div>
 
       <div class="shortcuts">
-        <h3>Atalhos Rápidos</h3>
+        <h3>{{ i18n.t('welcome.shortcuts') }}</h3>
         <div class="shortcut-grid">
           <div class="shortcut">
             <kbd>Ctrl</kbd> + <kbd>P</kbd>
-            <span>Ir para arquivo</span>
+            <span>{{ i18n.t('welcome.go_to_file') }}</span>
           </div>
           <div class="shortcut">
             <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd>
-            <span>Paleta de comandos</span>
+            <span>{{ i18n.t('welcome.command_palette') }}</span>
           </div>
           <div class="shortcut">
             <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F</kbd>
-            <span>Buscar em arquivos</span>
+            <span>{{ i18n.t('welcome.search_files') }}</span>
           </div>
           <div class="shortcut">
             <kbd>Ctrl</kbd> + <kbd>`</kbd>
-            <span>Terminal integrado</span>
+            <span>{{ i18n.t('welcome.integrated_terminal') }}</span>
           </div>
         </div>
       </div>
