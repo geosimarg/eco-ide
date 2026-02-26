@@ -4,22 +4,19 @@ import SearchPanel from '@/components/sidebar/SearchPanel.vue';
 import ExtensionsPanel from '@/components/sidebar/ExtensionsPanel.vue';
 import GitPanel from '@/components/sidebar/GitPanel.vue';
 
+import { useI18nStore } from '@/stores/i18n';
+
 defineProps<{
   activeView: 'files' | 'search' | 'extensions' | 'git';
 }>();
 
-const titles: Record<string, string> = {
-  files: 'EXPLORADOR',
-  search: 'BUSCAR',
-  extensions: 'EXTENSÕES',
-  git: 'CONTROLE DE CÓDIGO',
-};
+const i18n = useI18nStore();
 </script>
 
 <template>
   <aside class="sidebar">
     <div class="sidebar-header">
-      <span class="sidebar-title">{{ titles[activeView] }}</span>
+      <span class="sidebar-title">{{ i18n.t(`activity.${activeView}`).toUpperCase() }}</span>
     </div>
 
     <div class="sidebar-content">

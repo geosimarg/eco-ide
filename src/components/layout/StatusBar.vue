@@ -53,7 +53,7 @@ async function handleOpenFolder() {
     const selected = await open({
       directory: true,
       multiple: false,
-      title: 'Selecione uma pasta'
+      title: i18n.t('welcome.select_a_folder')
     });
 
     if (selected && typeof selected === 'string') {

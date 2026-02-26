@@ -14,10 +14,10 @@ const uiStore = useUIStore();
 const i18n = useI18nStore();
 
 const views = [
-  { id: 'files' as const, icon: 'files', title: 'Explorador' },
-  { id: 'search' as const, icon: 'search', title: 'Buscar' },
-  { id: 'git' as const, icon: 'git', title: 'Controle de Código' },
-  { id: 'extensions' as const, icon: 'extensions', title: 'Extensões' },
+  { id: 'files' as const, icon: 'files', titleKey: 'activity.files' },
+  { id: 'search' as const, icon: 'search', titleKey: 'activity.search' },
+  { id: 'git' as const, icon: 'git', titleKey: 'activity.git' },
+  { id: 'extensions' as const, icon: 'extensions', titleKey: 'activity.extensions' },
 ];
 </script>
 
@@ -25,7 +25,7 @@ const views = [
   <div class="activity-bar">
     <div class="top-icons">
       <button v-for="view in views" :key="view.id" class="activity-btn" :class="{ active: activeView === view.id }"
-        :title="view.title" @click="emit('select', view.id)">
+        :title="i18n.t(view.titleKey)" @click="emit('select', view.id)">
         <!-- Files Icon -->
         <svg v-if="view.icon === 'files'" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="1.5">

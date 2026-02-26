@@ -59,6 +59,12 @@
     "workspace": {
         "no_folder": "Sem pasta aberta"
     },
+    "activity": {
+        "files": "Explorador",
+        "search": "Buscar",
+        "extensions": "Extensões",
+        "git": "Controle de Código"
+    },
     "explorer": {
         "new_file": "Novo Arquivo",
         "new_folder": "Nova Pasta",

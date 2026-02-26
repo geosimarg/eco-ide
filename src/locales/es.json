@@ -60,6 +60,12 @@
     "workspace": {
         "no_folder": "Sin carpeta abierta"
     },
+    "activity": {
+        "files": "Explorador",
+        "search": "Buscar",
+        "extensions": "Extensiones",
+        "git": "Control de Código"
+    },
     "explorer": {
         "new_file": "Nuevo Archivo",
         "new_folder": "Nueva Carpeta",
