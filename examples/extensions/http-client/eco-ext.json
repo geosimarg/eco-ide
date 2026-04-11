@@ -1,0 +1,6 @@
+{
+  "name": "HTTP Client",
+  "version": "1.0.0",
+  "author": "Eco IDE",
+  "description": "REST API client similar to Postman/Insomnia for testing HTTP endpoints"
+}

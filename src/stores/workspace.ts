@@ -10,6 +10,7 @@ export interface OpenFile {
     content: string;
     modified: boolean;
     language: string;
+    pinned?: boolean;
     initialLine?: number;
     initialColumn?: number;
 }
@@ -26,6 +27,7 @@ export interface EditorGroup {
     id: string;
     files: OpenFile[];
     activeFileId: string | null;
+    direction?: 'horizontal' | 'vertical';
 }
 
 export const useWorkspaceStore = defineStore('workspace', () => {
@@ -47,7 +49,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     });
 
     const activeGroup = computed(() => {
-        return groups.value.find(g => g.id === activeGroupId.value) || groups.value[0];
+        return groups.value.find(g => g.id === activeGroupId.value) || groups.value[0] || { id: 'group-1', files: [], activeFileId: null };
     });
 
     // Getters
@@ -703,6 +705,65 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         activeGroupId.value = 'group-1';
         activeFileId.value = null;
     }
+    
+    function toggleFilePinned(id: string) {
+        for (const group of groups.value) {
+            const file = group.files.find(f => f.id === id);
+            if (file) {
+                file.pinned = !file.pinned;
+                return;
+            }
+        }
+    }
+    
+    function closeOtherFiles(id: string) {
+        for (const group of groups.value) {
+            const filesToClose = group.files.filter(f => f.id !== id && !f.pinned).map(f => f.id);
+            for (const fid of filesToClose) {
+                closeFile(fid);
+            }
+        }
+    }
+    
+    function closeSavedFiles() {
+        for (const group of groups.value) {
+            const filesToClose = group.files.filter(f => !f.modified && !f.pinned).map(f => f.id);
+            for (const fid of filesToClose) {
+                closeFile(fid);
+            }
+        }
+    }
+    
+    function splitEditor(direction: 'vertical' | 'horizontal') {
+        const currentActive = activeFileId.value;
+        if (!currentActive) return;
+        
+        let fileToMove: OpenFile | undefined;
+        for (const group of groups.value) {
+            fileToMove = group.files.find(f => f.id === currentActive);
+            if (fileToMove) break;
+        }
+        
+        if (!fileToMove) return;
+        
+        const newGroup: EditorGroup = {
+            id: `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            files: [],
+            activeFileId: null,
+            direction: direction,
+        };
+        
+        for (const group of groups.value) {
+            const index = group.files.findIndex(f => f.id === currentActive);
+            if (index !== -1) {
+                group.files.splice(index, 1);
+                newGroup.files.push(fileToMove);
+                newGroup.activeFileId = fileToMove.id;
+                groups.value.push(newGroup);
+                break;
+            }
+        }
+    }
 
     return {
         // Estado
@@ -749,6 +810,10 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         saveWorkspaceToFile,
         loadWorkspaceFromFile,
         closeWorkspace: closeProject,
+        toggleFilePinned,
+        closeOtherFiles,
+        closeSavedFiles,
+        splitEditor,
     };
 });
 

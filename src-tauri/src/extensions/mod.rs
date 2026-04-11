@@ -90,12 +90,11 @@ pub async fn load_extension(
 #[tauri::command]
 pub async fn discover_extensions(
     state: State<'_, ExtensionState>,
-    workspace_path: String,
+    extensions_path: String,
 ) -> Result<Vec<LoadedExtension>, String> {
-    let extensions_dir = Path::new(&workspace_path).join(".eco/extensions");
-    let extensions = discover_extensions_in_dir(&extensions_dir);
+    let extensions_dir = Path::new(&extensions_path);
+    let extensions = discover_extensions_in_dir(extensions_dir);
     
-    // Carregar cada extensão encontrada
     let mut host = state.0.lock().unwrap();
     for ext in &extensions {
         let wasm_path = Path::new(&ext.path);

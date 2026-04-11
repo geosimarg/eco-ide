@@ -13,9 +13,10 @@ use walkdir::WalkDir;
 use tauri::Manager;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 
 mod extensions;
-use extensions::{ExtensionState, load_extension, host::ExtensionHost};
+use extensions::{ExtensionState, load_extension, discover_extensions, list_extensions, host::ExtensionHost};
 
 /// Representa uma entrada no sistema de arquivos (arquivo ou diretório)
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -186,6 +187,74 @@ fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<(), AppError> {
     }
     
     Ok(())
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct HttpRequestParams {
+    pub method: String,
+    pub url: String,
+    pub headers: Vec<(String, String)>,
+    pub body: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct HttpResponseData {
+    pub status: u16,
+    pub status_text: String,
+    pub headers: Vec<(String, String)>,
+    pub body: String,
+    pub time_ms: u64,
+}
+
+#[tauri::command]
+async fn send_http_request(params: HttpRequestParams) -> Result<HttpResponseData, String> {
+    let start = std::time::Instant::now();
+    
+    let client = reqwest::Client::new();
+    
+    let mut header_map = HeaderMap::new();
+    for (key, value) in &params.headers {
+        if let (Ok(name), Ok(val)) = (
+            HeaderName::try_from(key.as_str()),
+            HeaderValue::try_from(value.as_str())
+        ) {
+            header_map.insert(name, val);
+        }
+    }
+    
+    let mut request_builder = client.request(
+        reqwest::Method::from_bytes(params.method.to_uppercase().as_bytes()).unwrap_or(reqwest::Method::GET),
+        &params.url
+    );
+    
+    request_builder = request_builder.headers(header_map);
+    
+    if let Some(body) = params.body {
+        request_builder = request_builder.body(body);
+    }
+    
+    let response = request_builder.send().await.map_err(|e| e.to_string())?;
+    
+    let status = response.status().as_u16();
+    let status_text = response.status().canonical_reason().unwrap_or("Unknown").to_string();
+    
+    let resp_headers: Vec<(String, String)> = response
+        .headers()
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
+        .collect();
+    
+    let body = response.text().await.map_err(|e| e.to_string())?;
+    
+    let time_ms = start.elapsed().as_millis() as u64;
+    
+    Ok(HttpResponseData {
+        status,
+        status_text,
+        headers: resp_headers,
+        body,
+        time_ms,
+    })
 }
 
 
@@ -372,6 +441,9 @@ fn main() {
             search_files,
             get_app_config_dir,
             load_extension,
+            discover_extensions,
+            list_extensions,
+            send_http_request,
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao executar a aplicação Tauri");
