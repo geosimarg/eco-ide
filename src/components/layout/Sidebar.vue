@@ -3,11 +3,12 @@ import FileExplorer from '@/components/sidebar/FileExplorer.vue';
 import SearchPanel from '@/components/sidebar/SearchPanel.vue';
 import ExtensionsPanel from '@/components/sidebar/ExtensionsPanel.vue';
 import GitPanel from '@/components/sidebar/GitPanel.vue';
+import HttpClientPanel from '@/components/sidebar/HttpClientPanel.vue';
 
 import { useI18nStore } from '@/stores/i18n';
 
 defineProps<{
-  activeView: 'files' | 'search' | 'extensions' | 'git';
+  activeView: 'files' | 'search' | 'extensions' | 'git' | 'http';
 }>();
 
 const i18n = useI18nStore();
@@ -22,6 +23,7 @@ const i18n = useI18nStore();
     <div class="sidebar-content">
       <FileExplorer v-if="activeView === 'files'" />
       <SearchPanel v-else-if="activeView === 'search'" />
+      <HttpClientPanel v-else-if="activeView === 'http'" />
       <ExtensionsPanel v-else-if="activeView === 'extensions'" />
       <GitPanel v-else-if="activeView === 'git'" />
     </div>

@@ -16,7 +16,7 @@ type SubMenuItem = {
   label: () => string;
   action?: () => void;
   checked?: () => boolean;
-  disabled?: boolean;
+  disabled?: boolean | (() => boolean);
   type?: undefined;
   submenu?: undefined;
 };
@@ -27,9 +27,9 @@ type MenuItemShape =
     id: string;
     label: () => string;
     action?: () => void;
-    disabled?: boolean;
+    disabled?: boolean | (() => boolean);
     submenu?: SubMenuItem[];
-    checked?: undefined; // Menu raiz não tem check
+    checked?: undefined;
     type?: undefined;
   };
 
@@ -50,10 +50,11 @@ const menus: { id: string; label: () => string; items: MenuItemShape[] }[] = [
       { id: 'open_workspace', label: () => i18n.t('file.open_workspace'), action: () => workspaceStore.loadWorkspaceFromFile() },
       { id: 'open_recent', label: () => i18n.t('file.open_recent'), disabled: true },
       { type: 'separator' },
-      { id: 'save', label: () => i18n.t('file.save'), action: () => saveCurrentFile() },
-      { id: 'save_as', label: () => i18n.t('file.save_as'), disabled: true },
+      { id: 'save', label: () => i18n.t('file.save'), action: () => saveCurrentFile(), disabled: () => !workspaceStore.activeFile || !workspaceStore.activeFile.modified },
+      { id: 'save_as', label: () => i18n.t('file.save_as'), disabled: () => !workspaceStore.activeFile },
       { id: 'save_workspace', label: () => i18n.t('file.save_workspace'), action: () => workspaceStore.saveWorkspaceToFile() },
       { type: 'separator' },
+      { id: 'compare_with_file', label: () => i18n.t('file.compare_with_file'), action: () => openDiffViewer() },
       { type: 'separator' },
       { id: 'settings', label: () => i18n.t('settings.title'), action: () => uiStore.openSettings() },
       { type: 'separator' },
@@ -113,7 +114,8 @@ function closeMenu() {
 }
 
 function handleAction(item: any) {
-  if (item.disabled) return;
+  const isDisabled = typeof item.disabled === 'function' ? item.disabled() : item.disabled;
+  if (isDisabled) return;
   if (item.action) {
     item.action();
     closeMenu();
@@ -160,6 +162,36 @@ function saveCurrentFile() {
   }
 }
 
+async function openDiffViewer() {
+  try {
+    const { open } = await import('@tauri-apps/plugin-dialog');
+    const { invoke } = await import('@tauri-apps/api/core');
+    
+    const filePath = await open({
+      multiple: false,
+      filters: [{ name: 'All Files', extensions: ['*'] }]
+    });
+    
+    if (filePath && typeof filePath === 'string') {
+      const originalContent = await invoke<string>('read_file', { path: filePath });
+      const activeFile = workspaceStore.activeFile;
+      
+      if (activeFile) {
+        uiStore.openDiffViewer(
+          activeFile.content,
+          originalContent,
+          activeFile.name,
+          filePath.split(/[\\/]/).pop() || 'Arquivo selecionado'
+        );
+      } else {
+        uiStore.openDiffViewer('', originalContent, 'Sem arquivo ativo', filePath.split(/[\\/]/).pop() || 'Arquivo selecionado');
+      }
+    }
+  } catch (e) {
+    console.error('Erro ao abrir diff:', e);
+  }
+}
+
 async function openDocs() {
   const { open } = await import('@tauri-apps/plugin-shell');
   await open('https://github.com/eco-ide/docs');
@@ -178,7 +210,7 @@ async function openDocs() {
         <template v-for="(item, index) in menu.items" :key="index">
           <div v-if="isSeparator(item)" class="separator"></div>
 
-          <div v-else class="dropdown-item" :class="{ disabled: item.disabled, 'has-submenu': item.submenu }"
+          <div v-else class="dropdown-item" :class="{ disabled: typeof item.disabled === 'function' ? item.disabled() : item.disabled, 'has-submenu': item.submenu }"
             @click.stop="!item.submenu && handleAction(item)">
             <span class="item-label no-select">{{ typeof item.label === 'function' ? item.label() : '' }}</span>
             <span v-if="item.checked && item.checked" class="check">✓</span>
@@ -186,7 +218,7 @@ async function openDocs() {
 
             <!-- Submenu Nível 1 (Simples) -->
             <div v-if="item.submenu" class="submenu">
-              <div v-for="sub in item.submenu" :key="sub.id" class="dropdown-item" @click.stop="handleAction(sub)">
+              <div v-for="sub in item.submenu" :key="sub.id" class="dropdown-item" :class="{ disabled: typeof sub.disabled === 'function' ? sub.disabled() : sub.disabled }" @click.stop="handleAction(sub)">
                 <span class="item-label no-select">{{ sub.label() }}</span>
                 <span v-if="sub.checked && sub.checked?.()" class="check">✓</span>
               </div>

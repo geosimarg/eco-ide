@@ -3,6 +3,7 @@ import { ref, computed, nextTick } from 'vue';
 import { useWorkspaceStore, type FileEntry } from '@/stores/workspace';
 import { useConfigStore } from '@/stores/config';
 import { useI18nStore } from '@/stores/i18n';
+import { useUIStore } from '@/stores/ui';
 import { logger } from '@/utils/logger';
 import NewFileModal from '@/components/modals/NewFileModal.vue';
 import NewFolderModal from '@/components/modals/NewFolderModal.vue';
@@ -12,6 +13,7 @@ import ContextMenu, { type ContextMenuItem } from '@/components/common/ContextMe
 const workspaceStore = useWorkspaceStore();
 const configStore = useConfigStore();
 const i18n = useI18nStore();
+const uiStore = useUIStore();
 
 const files = computed(() => {
   return filterEntries(workspaceStore.files);
@@ -76,22 +78,60 @@ const contextMenuItems = computed<ContextMenuItem[]>(() => {
   const entry = contextMenuEntry.value;
   const items: ContextMenuItem[] = [];
 
-  if (entry?.isDirectory) {
-    items.push({ id: 'new_file', label: i18n.t('context.new_file') });
-    items.push({ id: 'new_folder', label: i18n.t('context.new_folder') });
-    items.push({ id: 'divider1', label: '', divider: true });
+  // Build menu based on whether there's a selected entry
+  if (!entry) {
+    // Background menu (no selection)
+    items.push({ id: 'new_file_bg', label: i18n.t('context.new_file'), shortcut: 'Ctrl+N' });
+    items.push({ id: 'new_folder_bg', label: i18n.t('context.new_folder'), shortcut: 'Ctrl+Shift+N' });
+    return items;
   }
 
-  items.push({ id: 'copy', label: i18n.t('context.copy') });
-  items.push({ id: 'cut', label: i18n.t('context.cut') });
-
-  if (entry?.isDirectory && clipboard.value) {
-    items.push({ id: 'paste', label: i18n.t('context.paste') });
+  // Group: Arquivo (New submenu for directories)
+  if (entry.isDirectory) {
+    items.push({
+      id: 'novo',
+      label: i18n.t('context.novo'),
+      children: [
+        { id: 'new_file', label: i18n.t('context.new_file'), shortcut: 'Ctrl+N' },
+        { id: 'new_folder', label: i18n.t('context.new_folder'), shortcut: 'Ctrl+Shift+N' }
+      ]
+    });
+  } else {
+    items.push({ id: 'new_file', label: i18n.t('context.new_file'), shortcut: 'Ctrl+N' });
+    items.push({ id: 'new_folder', label: i18n.t('context.new_folder'), shortcut: 'Ctrl+Shift+N' });
   }
 
+  // Divider
+  items.push({ id: 'divider1', label: '', divider: true });
+
+  // Group: Editar
+  items.push({
+    id: 'editar',
+    label: i18n.t('context.editar'),
+    children: [
+      { id: 'copy', label: i18n.t('context.copy'), shortcut: 'Ctrl+C' },
+      { id: 'cut', label: i18n.t('context.cut'), shortcut: 'Ctrl+X' }
+    ]
+  });
+
+  if (clipboard.value) {
+    items.push({ id: 'paste', label: i18n.t('context.paste'), shortcut: 'Ctrl+V' });
+  }
+
+  // Divider
   items.push({ id: 'divider2', label: '', divider: true });
-  items.push({ id: 'rename', label: i18n.t('context.rename') });
-  items.push({ id: 'delete', label: i18n.t('context.delete') });
+
+  // Group: Ações
+  items.push({
+    id: 'acoes',
+    label: i18n.t('context.acoes'),
+    children: [
+      { id: 'rename', label: i18n.t('context.rename'), shortcut: 'F2' },
+      { id: 'compare', label: i18n.t('diff.compare_with_active'), shortcut: 'Ctrl+Shift+D' },
+      { id: 'divider_diff', label: '', divider: true },
+      { id: 'delete', label: i18n.t('context.delete'), shortcut: 'Del' }
+    ]
+  });
 
   return items;
 });
@@ -174,6 +214,32 @@ async function handleContextAction(actionId: string) {
     case 'delete':
       await handleDelete(entry);
       break;
+    case 'compare':
+      await handleCompareWithActiveFile(entry);
+      break;
+  }
+}
+
+async function handleCompareWithActiveFile(entry: FileEntry) {
+  const activeFile = workspaceStore.activeFile;
+  if (!activeFile) {
+    alert(i18n.t('diff.no_active_file'));
+    return;
+  }
+  
+  try {
+    const { invoke } = await import('@tauri-apps/api/core');
+    const originalContent = await invoke<string>('read_file', { path: entry.path });
+    
+    uiStore.openDiffViewer(
+      activeFile.content,
+      originalContent,
+      activeFile.name,
+      entry.name
+    );
+  } catch (e) {
+    logger.error('Erro ao comparar arquivos:', e);
+    alert('Erro ao comparar arquivos: ' + e);
   }
 }
 

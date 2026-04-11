@@ -3,11 +3,11 @@ import { useUIStore } from '@/stores/ui';
 import { useI18nStore } from '@/stores/i18n';
 
 defineProps<{
-  activeView: 'files' | 'search' | 'extensions' | 'git';
+  activeView: 'files' | 'search' | 'extensions' | 'git' | 'http';
 }>();
 
 const emit = defineEmits<{
-  select: [view: 'files' | 'search' | 'extensions' | 'git'];
+  select: [view: 'files' | 'search' | 'extensions' | 'git' | 'http'];
 }>();
 
 const uiStore = useUIStore();
@@ -16,6 +16,7 @@ const i18n = useI18nStore();
 const views = [
   { id: 'files' as const, icon: 'files', titleKey: 'activity.files' },
   { id: 'search' as const, icon: 'search', titleKey: 'activity.search' },
+  { id: 'http' as const, icon: 'http', titleKey: 'activity.http' },
   { id: 'git' as const, icon: 'git', titleKey: 'activity.git' },
   { id: 'extensions' as const, icon: 'extensions', titleKey: 'activity.extensions' },
 ];
@@ -38,6 +39,16 @@ const views = [
           stroke="currentColor" stroke-width="1.5">
           <circle cx="11" cy="11" r="6" />
           <path d="M21 21L15.5 15.5" />
+        </svg>
+
+        <!-- HTTP Icon -->
+        <svg v-else-if="view.icon === 'http'" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.5">
+          <path d="M4 6h16" />
+          <path d="M4 12h10" />
+          <path d="M4 18h6" />
+          <path d="M14 12h6" />
+          <circle cx="18" cy="12" r="2" />
         </svg>
 
         <!-- Git Icon -->
