@@ -83,7 +83,7 @@ export const useConfigStore = defineStore('config', () => {
     // O 'config' exportado é o localConfig para escrita, mas leitura deve ser cuidadosa.
     // Para manter compatibilidade com código existente que usa config.value = ..., mantemos localConfig como 'config'
     // Mas códigos que leem devem preferir effectiveConfig se quiserem o valor final.
-    const config = localConfig;
+    // Atualizar estado com deep merge ou sobresscrever
 
     async function loadConfig(wsPath: string) {
         workspacePath.value = wsPath;

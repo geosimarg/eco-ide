@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import { useExtensionStore, type Extension } from '@/stores/extensions';
+import { useWorkspaceStore } from '@/stores/workspace';
 
-interface Extension {
-  id: string;
-  name: string;
-  description: string;
-  version: string;
-  installed: boolean;
-  language: 'rust' | 'typescript' | 'python' | 'go';
-}
-
+const extStore = useExtensionStore();
+const workspace = useWorkspaceStore();
 const searchQuery = ref('');
+
+onMounted(() => {
+  extStore.discoverExtensions();
+});
+
+watch(() => workspace.workspacePath, () => {
+  extStore.discoverExtensions();
+});
+
 const extensions = ref<Extension[]>([
   {
     id: 'rust-analyzer',
@@ -43,10 +47,15 @@ const languageIcons: Record<string, string> = {
   typescript: '🟦',
   python: '🐍',
   go: '🐹',
+  wasm: '⚙️',
 };
 
 function toggleInstall(ext: Extension) {
-  ext.installed = !ext.installed;
+  if (ext.language === 'wasm') {
+     extStore.activateExtension(ext);
+  } else {
+     ext.installed = !ext.installed;
+  }
 }
 </script>
 
@@ -65,7 +74,7 @@ function toggleInstall(ext: Extension) {
       <h3 class="section-title">Instaladas</h3>
       <div class="extension-list">
         <div
-          v-for="ext in extensions.filter(e => e.installed)"
+          v-for="ext in [...extStore.loadedExtensions, ...extensions.filter(e => e.installed)]"
           :key="ext.id"
           class="extension-item"
         >
@@ -74,12 +83,12 @@ function toggleInstall(ext: Extension) {
             <div class="ext-name">{{ ext.name }}</div>
             <div class="ext-desc">{{ ext.description }}</div>
             <div class="ext-meta">
-              <span class="ext-version">v{{ ext.version }}</span>
-              <span class="ext-lang">{{ ext.language }}</span>
+            <span class="ext-version">v{{ ext.version }}</span>
+              <span class="ext-lang">{{ ext.language === 'wasm' ? 'WASM' : ext.language }}</span>
             </div>
           </div>
           <button class="uninstall-btn" @click="toggleInstall(ext)">
-            Desinstalar
+            {{ ext.language === 'wasm' ? 'Executar' : 'Desinstalar' }}
           </button>
         </div>
       </div>

@@ -14,6 +14,9 @@ use tauri::Manager;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
 
+mod extensions;
+use extensions::{ExtensionState, load_extension, host::ExtensionHost};
+
 /// Representa uma entrada no sistema de arquivos (arquivo ou diretório)
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FileEntry {
@@ -314,7 +317,10 @@ fn get_app_config_dir(app_handle: tauri::AppHandle) -> Result<String, AppError> 
 }
 
 fn main() {
+    let extension_host = ExtensionHost::new().expect("Failed to create ExtensionHost");
+
     tauri::Builder::default()
+        .manage(ExtensionState(std::sync::Mutex::new(extension_host)))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
@@ -365,6 +371,7 @@ fn main() {
             copy_path,
             search_files,
             get_app_config_dir,
+            load_extension,
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao executar a aplicação Tauri");

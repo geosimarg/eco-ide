@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view';
 import { EditorState, Compartment, EditorSelection } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
@@ -371,7 +371,7 @@ watch(() => props.file.id, () => {
 // Quando o arquivo já está aberto e recebe nova posição (ex.: outro resultado da busca)
 watch(
   () => [props.file.initialLine, props.file.initialColumn],
-  ([line, col]) => {
+  ([line, _col]) => {
     if (line !== undefined && editorView) {
       scheduleApplyInitialPosition();
     }
