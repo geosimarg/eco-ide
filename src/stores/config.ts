@@ -24,9 +24,15 @@ export interface SessionData {
 }
 
 export interface EcoConfig {
+    // Hidden files
     hidden_files?: string[];
     hidden_folders?: string[];
-    // Futuro: theme, fontSize, etc.
+    
+    // Editor overrides
+    tabSize?: number;
+    wordWrap?: boolean;
+    minimap?: boolean;
+    lineNumbers?: number;
 }
 
 export interface WorkspaceConfig extends EcoConfig {

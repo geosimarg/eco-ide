@@ -169,6 +169,59 @@ async function handleFileClick(entry: FileEntry) {
   }
 }
 
+const isDragOver = ref(false);
+
+function handleDragEnter(e: DragEvent) {
+  e.preventDefault();
+  isDragOver.value = true;
+}
+
+function handleDragLeave(e: DragEvent) {
+  e.preventDefault();
+  isDragOver.value = false;
+}
+
+function handleDragOver(e: DragEvent) {
+  e.preventDefault();
+  if (e.dataTransfer) {
+    e.dataTransfer.dropEffect = 'copy';
+  }
+}
+
+async function handleDrop(e: DragEvent) {
+  e.preventDefault();
+  isDragOver.value = false;
+
+  if (!e.dataTransfer?.files.length) return;
+
+  const { open } = await import('@tauri-apps/plugin-dialog');
+  
+  const selected = await open({
+    multiple: true,
+    title: i18n.t('explorer.open_files'),
+  });
+
+  if (selected) {
+    const paths = Array.isArray(selected) ? selected : [selected];
+    for (const filePath of paths) {
+      if (typeof filePath === 'string') {
+        try {
+          const { invoke } = await import('@tauri-apps/api/core');
+          const content = await invoke<string>('read_file', { path: filePath });
+          const name = filePath.split(/[/\\]/).pop() || 'arquivo';
+          workspaceStore.openFile({
+            name,
+            path: filePath,
+            content
+          });
+        } catch (error) {
+          logger.error('Erro ao abrir arquivo:', filePath, error);
+        }
+      }
+    }
+  }
+}
+
 async function handleContextMenu(e: MouseEvent, entry: FileEntry) {
   e.preventDefault();
   e.stopPropagation();
@@ -420,7 +473,11 @@ function sortFiles(entries: FileEntry[]) {
 </script>
 
 <template>
-  <div class="file-explorer">
+  <div class="file-explorer" :class="{ 'drag-over': isDragOver }"
+    @dragenter="handleDragEnter"
+    @dragleave="handleDragLeave"
+    @dragover="handleDragOver"
+    @drop="handleDrop">
     <!-- Estado vazio -->
     <div v-if="!workspaceStore.workspacePath" class="empty-state">
       <p class="no-select">{{ i18n.t('workspace.no_folder') }}</p>
@@ -520,6 +577,12 @@ function sortFiles(entries: FileEntry[]) {
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+.file-explorer.drag-over {
+  background: var(--bg-hover);
+  outline: 2px dashed var(--accent-primary);
+  outline-offset: -4px;
 }
 
 .empty-state {

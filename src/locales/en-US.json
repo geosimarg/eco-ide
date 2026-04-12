@@ -72,6 +72,7 @@
         "new_file": "New File",
         "new_folder": "New Folder",
         "open_folder": "Open Folder",
+        "open_files": "Open Files",
         "title": "Explorer"
     },
     "context": {

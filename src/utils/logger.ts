@@ -1,23 +1,30 @@
-/**
- * Logger que só encaminha para console quando a aplicação está em modo desenvolvimento.
- */
-
 const isDev = import.meta.env.DEV;
+let logLevel: 'error' | 'warn' | 'info' | 'debug' | 'silent' = isDev ? 'warn' : 'silent';
+
+export function setLogLevel(level: typeof logLevel) {
+    logLevel = level;
+}
+
+function shouldLog(level: string): boolean {
+    if (logLevel === 'silent') return false;
+    const levels = ['error', 'warn', 'info', 'debug'];
+    return levels.indexOf(level) <= levels.indexOf(logLevel);
+}
 
 export const logger = {
     log: (...args: unknown[]) => {
-        if (isDev) console.log(...args);
+        if (shouldLog('info')) console.log(...args);
     },
     error: (...args: unknown[]) => {
-        if (isDev) console.error(...args);
+        if (shouldLog('error')) console.error(...args);
     },
     warn: (...args: unknown[]) => {
-        if (isDev) console.warn(...args);
+        if (shouldLog('warn')) console.warn(...args);
     },
     info: (...args: unknown[]) => {
-        if (isDev) console.info(...args);
+        if (shouldLog('info')) console.info(...args);
     },
     debug: (...args: unknown[]) => {
-        if (isDev) console.debug(...args);
+        if (shouldLog('debug')) console.debug(...args);
     },
 };

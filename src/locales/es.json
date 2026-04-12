@@ -72,6 +72,7 @@
         "new_file": "Nuevo Archivo",
         "new_folder": "Nueva Carpeta",
         "open_folder": "Abrir Carpeta",
+        "open_files": "Abrir Archivos",
         "title": "Explorador"
     },
     "context": {

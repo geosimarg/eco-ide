@@ -91,8 +91,6 @@ export const useWorkspaceStore = defineStore('workspace', () => {
             
             const { listen } = await import('@tauri-apps/api/event');
             await listen<{ path: string; kind: string }>('file-change', (event) => {
-                logger.log('File changed:', event.payload);
-                
                 const changedPath = event.payload.path;
                 if (workspacePath.value && changedPath.startsWith(workspacePath.value)) {
                     refreshFileTree();
