@@ -10,7 +10,16 @@ export interface GlobalConfig {
     shouldRestoreSession?: boolean;
     hidden_files?: string[];
     hidden_folders?: string[];
+    recentWorkspaces?: RecentWorkspace[];
 }
+
+export interface RecentWorkspace {
+    path: string;
+    name: string;
+    lastOpened: string;
+}
+
+const MAX_RECENT_WORKSPACES = 10;
 
 export const useGlobalConfigStore = defineStore('globalConfig', () => {
     const configDir = ref<string | null>(null);
@@ -76,12 +85,49 @@ export const useGlobalConfigStore = defineStore('globalConfig', () => {
         saveConfig();
     }
 
+    function addRecentWorkspace(path: string, name: string) {
+        if (!config.value.recentWorkspaces) {
+            config.value.recentWorkspaces = [];
+        }
+        
+        const existing = config.value.recentWorkspaces.findIndex(w => w.path === path);
+        if (existing !== -1) {
+            config.value.recentWorkspaces.splice(existing, 1);
+        }
+
+        config.value.recentWorkspaces.unshift({
+            path,
+            name,
+            lastOpened: new Date().toISOString()
+        });
+
+        if (config.value.recentWorkspaces.length > MAX_RECENT_WORKSPACES) {
+            config.value.recentWorkspaces = config.value.recentWorkspaces.slice(0, MAX_RECENT_WORKSPACES);
+        }
+
+        saveConfig();
+    }
+
+    function getRecentWorkspaces() {
+        return config.value.recentWorkspaces || [];
+    }
+
+    function removeRecentWorkspace(path: string) {
+        if (!config.value.recentWorkspaces) return;
+        
+        config.value.recentWorkspaces = config.value.recentWorkspaces.filter(w => w.path !== path);
+        saveConfig();
+    }
+
     return {
         config,
         loadConfig,
         saveConfig,
         setLocale,
         setLastWorkspace,
-        clearSession
+        clearSession,
+        addRecentWorkspace,
+        getRecentWorkspaces,
+        removeRecentWorkspace
     };
 });

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { logger } from '@/utils/logger';
 import { useConfigStore } from './config';
+import { useGlobalConfigStore } from './globalConfig';
 
 export interface OpenFile {
     id: string;
@@ -67,6 +68,10 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     function setWorkspace(path: string, name: string) {
         workspacePath.value = path;
         workspaceName.value = name;
+
+        const globalConfigStore = useGlobalConfigStore();
+        globalConfigStore.addRecentWorkspace(path, name);
+        globalConfigStore.setLastWorkspace(path);
 
         // Reset groups
         groups.value = [{ id: 'group-1', files: [], activeFileId: null }];
@@ -694,7 +699,6 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     }
 
     async function closeProject() {
-        const { useGlobalConfigStore } = await import('./globalConfig');
         const globalConfigStore = useGlobalConfigStore();
         globalConfigStore.clearSession();
 

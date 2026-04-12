@@ -132,7 +132,8 @@
         "command_palette": "Command palette",
         "search_files": "Search in files",
         "integrated_terminal": "Integrated terminal",
-        "select_a_folder": "Select a folder"
+        "select_a_folder": "Select a folder",
+        "recent_projects": "Recent Projects"
     },
     "diff": {
         "title": "Compare Files",

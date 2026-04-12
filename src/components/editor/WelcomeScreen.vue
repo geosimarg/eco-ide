@@ -4,12 +4,26 @@ import { open as shellOpen } from '@tauri-apps/plugin-shell';
 import { invoke } from '@tauri-apps/api/core';
 import { useWorkspaceStore } from '@/stores/workspace';
 import { useConfigStore } from '@/stores/config';
+import { useGlobalConfigStore } from '@/stores/globalConfig';
 import { logger } from '@/utils/logger';
 import { useI18nStore } from '@/stores/i18n';
 
 const i18n = useI18nStore();
 const workspaceStore = useWorkspaceStore();
 const configStore = useConfigStore();
+const globalConfigStore = useGlobalConfigStore();
+
+const recentWorkspaces = globalConfigStore.getRecentWorkspaces();
+
+async function openRecentWorkspace(path: string) {
+  try {
+    await workspaceStore.openFolder(path);
+    await configStore.loadConfig(path);
+  } catch (error) {
+    logger.error('Erro ao abrir projeto recente:', error);
+    globalConfigStore.removeRecentWorkspace(path);
+  }
+}
 
 async function handleOpenFolder() {
   try {
@@ -141,6 +155,26 @@ async function handleDocumentation() {
           </div>
         </div>
       </div>
+
+      <div v-if="recentWorkspaces.length > 0" class="recent-workspaces">
+        <h3>{{ i18n.t('welcome.recent_projects') }}</h3>
+        <div class="recent-list">
+          <button
+            v-for="ws in recentWorkspaces"
+            :key="ws.path"
+            class="recent-item"
+            @click="openRecentWorkspace(ws.path)"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V9C21 7.89543 20.1046 7 19 7H12L10 5H5C3.89543 5 3 5.89543 3 7Z" />
+            </svg>
+            <div class="recent-info">
+              <span class="recent-name">{{ ws.name }}</span>
+              <span class="recent-path">{{ ws.path }}</span>
+            </div>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -270,5 +304,63 @@ kbd {
   border: 1px solid var(--border-default);
   border-radius: 3px;
   color: var(--text-secondary);
+}
+
+.recent-workspaces {
+  width: 100%;
+  margin-top: var(--space-xl);
+}
+
+.recent-workspaces h3 {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast);
+  color: var(--text-primary);
+}
+
+.recent-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+}
+
+.recent-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.recent-name {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.recent-path {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

@@ -131,7 +131,8 @@
         "command_palette": "Paleta de comandos",
         "search_files": "Buscar em arquivos",
         "integrated_terminal": "Terminal integrado",
-        "select_a_folder": "Selecione uma pasta"
+        "select_a_folder": "Selecione uma pasta",
+        "recent_projects": "Projetos Recentes"
     },
     "diff": {
         "title": "Comparar Arquivos",
