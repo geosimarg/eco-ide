@@ -1,115 +1,108 @@
 # Eco IDE
 
-IDE extensível e moderna construída com Tauri, Vue 3 e WebAssembly.
+Modern, extensible desktop IDE built with Tauri, Vue 3, and WebAssembly.
 
-![Eco IDE Screenshot](docs/screenshot.png)
+![Eco IDE](docs/screenshot.png)
 
-## ✨ Características
+## Features
 
-- **Performance Superior**: Construída com Tauri + Rust (não Electron)
-  - Bundle ~5MB (vs ~150MB do Electron)
-  - Uso de RAM ~30-50MB (vs ~150-300MB)
-  
-- **Editor Avançado**: Powered by CodeMirror 6
-  - Syntax highlighting para 10+ linguagens
-  - Autocomplete inteligente
-  - Suporte a múltiplas abas
-  
-- **Extensões Multi-Linguagem**: Via WebAssembly
-  - Rust, TypeScript, Python, Go
-  - Sandbox de segurança por padrão
-  - Performance near-native
+- **Lightweight Performance**: Built with Tauri + Rust (~5MB bundle, 30-50MB RAM)
+- **Advanced Editor**: CodeMirror 6 with syntax highlighting for 10+ languages
+- **Autocomplete & Linting**: Built-in code completion and error detection
+- **Extension Marketplace**: Load extensions from GitHub repository
+- **WebAssembly Extensions**: Safe, sandboxed plugins in Rust/TypeScript
+- **Multi-Tab Support**: Split view and multiple editor groups
+- **i18n**: Portuguese (pt-BR), English (en-US), Spanish (es)
 
-## 🚀 Quick Start
+## Quick Start
 
-### Pré-requisitos
+### Prerequisites
 
 - [Node.js](https://nodejs.org/) 20+
 - [Rust](https://rustup.rs/) 1.75+
 - [Tauri Prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites)
 
-### Instalação
+### Installation
 
 ```bash
-# Clone o repositório
 git clone https://github.com/geosimarg/eco-ide.git
 cd eco-ide
-
-# Instale as dependências
 npm install
-
-# Execute em modo de desenvolvimento
 npm run tauri:dev
+```
 
-# Ou compile para produção
+### Build
+
+```bash
 npm run tauri:build
 ```
 
-## 🏗️ Arquitetura
+## Commands
+
+```bash
+npm run dev          # Frontend development
+npm run tauri:dev    # Full app in dev mode
+npm run build        # Frontend build
+npm run tauri:build # Full app build
+npm test             # Run tests
+npm run lint         # Lint code
+```
+
+## Project Status
+
+| Phase | Status |
+|-------|--------|
+| UI/UX Desktop | ✅ Complete |
+| Extension System | ✅ Complete |
+| Testing Infrastructure | ✅ Complete |
+| Editor Improvements | ✅ Complete |
+| Refactoring | Pending |
+| Polish | Pending |
+
+**Test Suite**: 338 tests passing
+
+## Architecture
 
 ```
 eco-ide/
-├── src/                    # Frontend Vue 3
-│   ├── components/         # Componentes UI
-│   ├── stores/             # Estado Pinia
-│   └── styles/             # Design system
-├── src-tauri/              # Backend Rust
-│   ├── src/                # Código fonte
-│   └── wit/                # WebAssembly Interface Types
-└── sdks/                   # SDKs para extensões
+├── src/                    # Vue 3 frontend
+│   ├── components/         # UI components
+│   ├── stores/            # Pinia state management
+│   ├── utils/             # Utilities (LSP, logger)
+│   └── locales/           # i18n translations
+├── src-tauri/             # Rust backend
+│   ├── src/               # Tauri commands
+│   └── wit/              # WASM interface
+├── tests/                 # Test suites
+└── .github/workflows/    # CI configuration
 ```
 
-## 📦 Sistema de Extensões
+## Extension System
 
-As extensões são executadas em sandbox WebAssembly, oferecendo:
-- **Segurança**: Acesso controlado a APIs
-- **Performance**: Execução near-native
-- **Portabilidade**: Uma build, todas as plataformas
+Extensions are loaded from:
+- **Marketplace**: `https://github.com/geosimarg/eco-ide-extensions`
+- **Local**: `.eco/extensions/` folder
 
-### Exemplo de Extensão (Rust)
+Available extensions:
+- HTTP Client
+- Prettier Formatter
+- GitLens
+- Python LSP
+- Rust Analyzer
+- Themes (Atom Dark, Dracula)
+- JavaScript Snippets
+- Dockerfile Support
+- Remote SSH
 
-```rust
-use eco_extension_sdk::prelude::*;
+## Editor Features
 
-#[eco_extension]
-fn activate() {
-    commands::register("hello", "Dizer Olá", || {
-        ui::show_message("Olá do Rust! 🦀", MessageLevel::Info);
-    });
-}
-```
+- Syntax highlighting: TypeScript, JavaScript, Python, Rust, JSON, HTML, CSS, Markdown
+- Autocomplete: CodeMirror 6 built-in
+- Linting: CodeMirror 6 built-in
+- Multi-cursor editing
+- Search and replace
+- Code folding
 
-### Exemplo de Extensão (TypeScript)
-
-```typescript
-import { commands, ui, MessageLevel } from 'eco-extension-sdk';
-
-export function activate(): void {
-    commands.register("hello", "Dizer Olá", () => {
-        ui.showMessage("Olá do TypeScript! 🟦", MessageLevel.Info);
-    });
-}
-```
-
-## 🛠️ Desenvolvimento
-
-### Estrutura de Comandos
-
-```bash
-npm run dev          # Inicia frontend em modo dev
-npm run tauri:dev    # Inicia app Tauri em modo dev
-npm run build        # Build frontend
-npm run tauri:build  # Build app completo
-npm run test         # Executa testes
-npm run lint         # Lint do código
-```
-
-### Adicionando uma Nova Linguagem
-
-1. Instale o pacote CodeMirror correspondente
-2. Importe e registre em `CodeEditor.vue`
-3. Adicione a detecção de extensão em `getLanguageExtension()`
-
-## 📄 Licença
+## License
 
 MIT © EcoIDE Team

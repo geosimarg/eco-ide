@@ -1,35 +1,39 @@
 # Documentação do Eco IDE
 
-Bem-vindo à documentação do **Eco IDE**. Estes guias explicam como usar a IDE com as funcionalidades já implementadas.
+Guias para usuários e colaboradores do Eco IDE.
 
-## Conteúdo
+## Para Usuários
 
-| Documento | Descrição |
-|-----------|-----------|
-| [Guia de início rápido](guia-inicio-rapido.md) | Como instalar, executar e dar os primeiros passos na IDE. |
-| [Interface da IDE](interface.md) | Barra de título, barra de atividades, sidebar e barra de status. |
-| [Workspace e arquivos](workspace-e-arquivos.md) | Abrir pasta, explorador de arquivos, abas e salvar arquivos. |
-| [Editor de código](editor.md) | Atalhos, linguagens, realce de sintaxe e configurações do editor. |
+| Guia | Descrição |
+|------|-----------|
+| [Guia de início rápido](guia-inicio-rapido.md) | Instalação, execução e primeiros passos |
+| [Interface da IDE](interface.md) | Barra de título, atividades, sidebar, status |
+| [Workspace e arquivos](workspace-e-arquivos.md) | Abrir pasta, explorador, abas, salvar |
+| [Editor de código](editor.md) | Atalhos, linguagens, autocomplete |
+| [Extensões](EXTENSIONS.md) | Marketplace e extensões locais |
 
-## Pré-requisitos
+## Para Colaboradores
 
-- **Node.js** 20+
-- **Rust** 1.75+
-- [Pré-requisitos do Tauri](https://tauri.app/v1/guides/getting-started/prerequisites) para sua plataforma
+| Recurso | Descrição |
+|---------|-----------|
+| [Arquitetura](../.planning/codebase/ARCHITECTURE.md) | Visão geral da arquitetura |
+| [Estrutura](../.planning/codebase/STRUCTURE.md) | Estrutura de diretórios |
+| [Stack](../.planning/research/STACK.md) | Tecnologias utilizadas |
+| [Roadmap](../.planning/ROADMAP.md) | Fases do projeto |
 
-## Executando a IDE
+## Quick Links
 
 ```bash
-npm install
+# Executar
 npm run tauri:dev
-```
 
-Para gerar o executável:
-
-```bash
+# Build
 npm run tauri:build
+
+# Testes
+npm test
 ```
 
 ---
 
-*Documentação atualizada conforme as funcionalidades disponíveis na versão atual da IDE.*
+*Atualizado: 2026-04-11*
