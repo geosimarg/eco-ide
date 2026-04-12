@@ -23,5 +23,14 @@ export default defineConfig({
         target: ['es2022', 'chrome100', 'safari15'],
         minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,
         sourcemap: !!process.env.TAURI_DEBUG,
+        rollupOptions: {
+            output: {
+                manualChunks: (id) => {
+                    if (id.includes('node_modules/codemirror')) return 'codemirror';
+                    if (id.includes('node_modules/vue') || id.includes('node_modules/pinia')) return 'vue';
+                    if (id.includes('node_modules/@tauri')) return 'tauri';
+                },
+            },
+        },
     },
 });

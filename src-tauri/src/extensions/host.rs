@@ -1,7 +1,7 @@
 use anyhow::Result;
 use wasmtime::*;
-// use wasmtime_wasi::{WasiCtx, WasiCtxBuilder};
 
+#[allow(dead_code)]
 pub struct ExtensionHost {
     engine: Engine,
 }
