@@ -9,14 +9,27 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 use walkdir::WalkDir;
-use tauri::Manager;
+use tauri::{Manager, Emitter};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::TrayIconBuilder;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use notify::{Watcher, RecommendedWatcher, RecursiveMode, Event, EventKind};
 
 mod extensions;
 use extensions::{ExtensionState, load_extension, discover_extensions, list_extensions, host::ExtensionHost};
+
+/// Estado global para file watching
+struct FileWatcherState {
+    watcher: Option<RecommendedWatcher>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FileChangeEvent {
+    pub path: String,
+    pub kind: String,
+}
 
 /// Representa uma entrada no sistema de arquivos (arquivo ou diretório)
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -377,7 +390,6 @@ fn get_app_config_dir(app_handle: tauri::AppHandle) -> Result<String, AppError> 
         AppError::InvalidPath("Não foi possível determinar o diretório de configuração do app".to_string())
     })?;
     
-    // Garantir que o diretório existe
     if !config_dir.exists() {
         fs::create_dir_all(&config_dir)?;
     }
@@ -385,11 +397,74 @@ fn get_app_config_dir(app_handle: tauri::AppHandle) -> Result<String, AppError> 
     Ok(config_dir.to_string_lossy().to_string())
 }
 
+fn event_kind_to_string(kind: &EventKind) -> String {
+    match kind {
+        EventKind::Create(_) => "create".to_string(),
+        EventKind::Modify(_) => "modify".to_string(),
+        EventKind::Remove(_) => "remove".to_string(),
+        EventKind::Access(_) => "access".to_string(),
+        _ => "other".to_string(),
+    }
+}
+
+#[tauri::command]
+fn start_file_watch(
+    app_handle: tauri::AppHandle,
+    path: String,
+    watcher_state: tauri::State<Arc<Mutex<FileWatcherState>>>,
+) -> Result<(), String> {
+    let mut state = watcher_state.lock().map_err(|e| e.to_string())?;
+    
+    if let Some(old_watcher) = state.watcher.take() {
+        drop(old_watcher);
+    }
+    
+    let app_handle_clone = app_handle.clone();
+    
+    let watcher = RecommendedWatcher::new(
+        move |res: Result<Event, notify::Error>| {
+            if let Ok(event) = res {
+                for path in event.paths {
+                    if !path.to_string_lossy().contains(".eco/") && 
+                       !path.to_string_lossy().contains("node_modules") &&
+                       !path.to_string_lossy().contains("target") {
+                        let change = FileChangeEvent {
+                            path: path.to_string_lossy().to_string(),
+                            kind: event_kind_to_string(&event.kind),
+                        };
+                        let _ = app_handle_clone.emit("file-change", change);
+                    }
+                }
+            }
+        },
+        notify::Config::default(),
+    ).map_err(|e| e.to_string())?;
+    
+    let mut watcher = watcher;
+    watcher.watch(Path::new(&path), RecursiveMode::Recursive)
+        .map_err(|e| e.to_string())?;
+    
+    state.watcher = Some(watcher);
+    
+    Ok(())
+}
+
+#[tauri::command]
+fn stop_file_watch(watcher_state: tauri::State<Arc<Mutex<FileWatcherState>>>) -> Result<(), String> {
+    let mut state = watcher_state.lock().map_err(|e| e.to_string())?;
+    if let Some(watcher) = state.watcher.take() {
+        drop(watcher);
+    }
+    Ok(())
+}
+
 fn main() {
     let extension_host = ExtensionHost::new().expect("Failed to create ExtensionHost");
+    let watcher_state = Arc::new(Mutex::new(FileWatcherState { watcher: None }));
 
     tauri::Builder::default()
         .manage(ExtensionState(std::sync::Mutex::new(extension_host)))
+        .manage(watcher_state)
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
@@ -444,6 +519,8 @@ fn main() {
             discover_extensions,
             list_extensions,
             send_http_request,
+            start_file_watch,
+            stop_file_watch,
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao executar a aplicação Tauri");

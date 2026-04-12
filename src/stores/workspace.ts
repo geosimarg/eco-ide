@@ -73,10 +73,65 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         globalConfigStore.addRecentWorkspace(path, name);
         globalConfigStore.setLastWorkspace(path);
 
-        // Reset groups
+        startFileWatch(path);
+
         groups.value = [{ id: 'group-1', files: [], activeFileId: null }];
         activeGroupId.value = 'group-1';
-        activeFileId.value = null; // Deprecated, keep sync maybe?
+        activeFileId.value = null;
+    }
+
+    let fileWatchStarted = false;
+    async function startFileWatch(path: string) {
+        if (fileWatchStarted) return;
+        fileWatchStarted = true;
+        
+        try {
+            const { invoke } = await import('@tauri-apps/api/core');
+            await invoke('start_file_watch', { path });
+            
+            const { listen } = await import('@tauri-apps/api/event');
+            await listen<{ path: string; kind: string }>('file-change', (event) => {
+                logger.log('File changed:', event.payload);
+                
+                const changedPath = event.payload.path;
+                if (workspacePath.value && changedPath.startsWith(workspacePath.value)) {
+                    refreshFileTree();
+                }
+            });
+        } catch (e) {
+            logger.error('File watch error:', e);
+            fileWatchStarted = false;
+        }
+    }
+
+    async function refreshFileTree() {
+        if (!workspacePath.value) return;
+        
+        try {
+            const { invoke } = await import('@tauri-apps/api/core');
+            const entries = await invoke<any[]>('list_directory', { path: workspacePath.value });
+            files.value = entries;
+            
+            for (const entry of files.value) {
+                if (entry.isDirectory && entry.expanded) {
+                    loadChildren(entry);
+                }
+            }
+        } catch (e) {
+            logger.error('Error refreshing file tree:', e);
+        }
+    }
+
+    async function loadChildren(entry: any) {
+        if (!entry.path) return;
+        
+        try {
+            const { invoke } = await import('@tauri-apps/api/core');
+            const children = await invoke<any[]>('list_directory', { path: entry.path });
+            entry.children = children;
+        } catch (e) {
+            logger.error('Error loading children:', e);
+        }
     }
 
     function setFiles(entries: FileEntry[]) {
