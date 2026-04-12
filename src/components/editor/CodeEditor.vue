@@ -21,6 +21,7 @@ import type { OpenFile } from '@/stores/workspace';
 import { useWorkspaceStore } from '@/stores/workspace';
 import { useEditorStore } from '@/stores/editor';
 import { logger } from '@/utils/logger';
+import Minimap from './Minimap.vue';
 
 const props = defineProps<{
   file: OpenFile;
@@ -31,6 +32,7 @@ const emit = defineEmits<{
 }>();
 
 const editorContainer = ref<HTMLElement | null>(null);
+const minimapScrollPercent = ref(0);
 const workspaceStore = useWorkspaceStore();
 const editorStore = useEditorStore();
 
@@ -323,6 +325,7 @@ function handleEditorScroll() {
 
     if (scrollHeight > 0) {
       const percent = scrollTop / scrollHeight;
+      minimapScrollPercent.value = percent;
       emit('scroll', percent);
     }
   }, 16);
@@ -394,13 +397,33 @@ onMounted(() => {
 onUnmounted(() => {
   destroyEditor();
 });
+
+function handleMinimapScroll(percent: number) {
+  if (!editorView) return;
+  const scroller = editorView.scrollDOM;
+  const scrollHeight = scroller.scrollHeight - scroller.clientHeight;
+  scroller.scrollTop = percent * scrollHeight;
+}
 </script>
 
 <template>
-  <div class="code-editor" ref="editorContainer"></div>
+  <div class="code-editor-wrapper">
+    <div class="code-editor" ref="editorContainer"></div>
+    <Minimap 
+      :content="file.content" 
+      :scrollPercent="minimapScrollPercent"
+      @scrollChange="handleMinimapScroll"
+    />
+  </div>
 </template>
 
 <style scoped>
+.code-editor-wrapper {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
 .code-editor {
   height: 100%;
   overflow: hidden;
