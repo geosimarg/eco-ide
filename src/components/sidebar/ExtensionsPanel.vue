@@ -190,12 +190,12 @@ async function handleRefresh() {
               v-else
               class="btn-install"
               @click="handleInstall(ext)"
+              :title="i18n.t('extensions.install')"
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M6 1v6M3 4l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M2 9v2h8v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 1v8M3 5l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 11v2h10v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
               </svg>
-              {{ i18n.t('extensions.install') }}
             </button>
           </div>
         </div>
@@ -294,8 +294,8 @@ async function handleRefresh() {
               v-else
               class="btn-install"
               @click="handleInstall(ext)"
+              :title="i18n.t('extensions.install')"
             >
-              {{ i18n.t('extensions.install') }}
             </button>
           </div>
         </div>
@@ -561,17 +561,19 @@ async function handleRefresh() {
   flex-direction: column;
   gap: 8px;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .extension-card {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 12px;
   padding: 12px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   transition: all 0.2s;
+  min-height: 80px;
 }
 
 .extension-card:hover {
@@ -579,55 +581,67 @@ async function handleRefresh() {
 }
 
 .ext-icon {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-tertiary);
   border-radius: 8px;
   font-size: 24px;
-  flex-shrink: 0;
+  overflow: hidden;
+  align-self: flex-start;
 }
 
 .ext-icon img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
 }
 
 .ext-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
 }
 
 .ext-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
-  margin-bottom: 4px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .ext-name {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .ext-version {
   font-size: 11px;
   color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .ext-desc {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin: 0 0 6px 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .ext-meta {
@@ -636,6 +650,7 @@ async function handleRefresh() {
   gap: 8px;
   font-size: 11px;
   color: var(--text-muted);
+  margin-top: auto;
 }
 
 .ext-path {
@@ -644,7 +659,6 @@ async function handleRefresh() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 200px;
 }
 
 .ext-actions {
@@ -652,6 +666,7 @@ async function handleRefresh() {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  align-self: center;
 }
 
 .btn-toggle {
@@ -706,16 +721,15 @@ async function handleRefresh() {
 }
 
 .btn-install {
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  justify-content: center;
   background: var(--accent-primary);
   border: none;
   border-radius: 6px;
   color: white;
-  font-size: 12px;
-  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }

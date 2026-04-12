@@ -4,7 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { useWorkspaceStore } from './workspace';
 
-const MARKETPLACE_URL = 'https://raw.githubusercontent.com/geosimarg/eco-ide-extensions/main/extensions.json';
+const MARKETPLACE_URL = 'https://raw.githubusercontent.com/geosimarg/eco-ide-extensions/master/extensions.json';
 const STORAGE_KEY = 'eco-ide-extensions';
 const CACHE_KEY = 'eco-ide-extensions-cache';
 
