@@ -9,6 +9,8 @@ Modern, extensible desktop IDE built with Tauri, Vue 3, and WebAssembly.
 - **Lightweight Performance**: Built with Tauri + Rust (~5MB bundle, 30-50MB RAM)
 - **Advanced Editor**: CodeMirror 6 with syntax highlighting for 10+ languages
 - **Autocomplete & Linting**: Built-in code completion and error detection
+- **Minimap**: Visual overview of code with scroll sync
+- **Git Integration**: Real git operations (status, stage, commit, branches) via Tauri shell
 - **Extension Marketplace**: Load extensions from GitHub repository
 - **WebAssembly Extensions**: Safe, sandboxed plugins in Rust/TypeScript
 - **Multi-Tab Support**: Split view and multiple editor groups
@@ -56,10 +58,10 @@ npm run lint         # Lint code
 | Extension System | ✅ Complete |
 | Testing Infrastructure | ✅ Complete |
 | Editor Improvements | ✅ Complete |
-| Refactoring | Pending |
-| Polish | Pending |
+| Refactoring | ✅ Complete |
+| Polish & Features | ✅ Complete |
 
-**Test Suite**: 338 tests passing
+**Test Suite**: 338 passing
 
 ## Architecture
 
@@ -99,6 +101,7 @@ Available extensions:
 - Syntax highlighting: TypeScript, JavaScript, Python, Rust, JSON, HTML, CSS, Markdown
 - Autocomplete: CodeMirror 6 built-in
 - Linting: CodeMirror 6 built-in
+- Minimap: Visual code overview with viewport indicator
 - Multi-cursor editing
 - Search and replace
 - Code folding

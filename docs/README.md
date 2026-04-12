@@ -36,4 +36,4 @@ npm test
 
 ---
 
-*Atualizado: 2026-04-11*
+*Atualizado: 2026-04-12 (Projeto completo)*

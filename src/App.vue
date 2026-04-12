@@ -1,19 +1,20 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useWorkspaceStore } from '@/stores/workspace';
 import { useI18nStore } from '@/stores/i18n';
 import { useGlobalConfigStore } from '@/stores/globalConfig';
 import { useConfigStore } from '@/stores/config';
-import { useUIStore } from '@/stores/ui'; // Importando uiStore
+import { useUIStore } from '@/stores/ui';
 import ActivityBar from '@/components/layout/ActivityBar.vue';
 import Sidebar from '@/components/layout/Sidebar.vue';
 import EditorArea from '@/components/layout/EditorArea.vue';
 import StatusBar from '@/components/layout/StatusBar.vue';
 import TitleBar from '@/components/layout/TitleBar.vue';
 import UnsavedChangesModal from '@/components/modals/UnsavedChangesModal.vue';
-import SettingsModal from '@/components/modals/SettingsModal.vue'; // Importando modal
+import SettingsModal from '@/components/modals/SettingsModal.vue';
 import DiffViewer from '@/components/editor/DiffViewer.vue';
+import CommandPalette from '@/components/modals/CommandPalette.vue';
 
 const workspaceStore = useWorkspaceStore();
 const i18nStore = useI18nStore();
@@ -23,6 +24,7 @@ const uiStore = useUIStore(); // Inicializando store
 
 const sidebarVisible = ref(true);
 const activeView = ref<'files' | 'search' | 'extensions' | 'git' | 'http'>('files');
+const commandPaletteVisible = ref(false);
 
 function setActiveView(view: typeof activeView.value) {
   if (activeView.value === view) {
@@ -33,6 +35,17 @@ function setActiveView(view: typeof activeView.value) {
   }
 }
 
+function handleGlobalKeydown(e: KeyboardEvent) {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'P') {
+    e.preventDefault();
+    commandPaletteVisible.value = true;
+  }
+}
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown);
+});
+
 onMounted(async () => {
   await i18nStore.initLocale();
   await globalConfigStore.loadConfig();
@@ -42,6 +55,8 @@ onMounted(async () => {
     await configStore.loadConfig(globalConfigStore.config.lastWorkspacePath);
     await workspaceStore.restoreSession();
   }
+
+  window.addEventListener('keydown', handleGlobalKeydown);
 
   const appWindow = getCurrentWindow();
   await appWindow.onCloseRequested(async (event) => {
@@ -119,6 +134,9 @@ onMounted(async () => {
     <!-- Status Bar (rodapé) -->
     <StatusBar />
   </div>
+
+  <!-- Command Palette -->
+  <CommandPalette :visible="commandPaletteVisible" @close="commandPaletteVisible = false" />
 </template>
 
 <style scoped>

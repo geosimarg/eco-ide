@@ -22,9 +22,9 @@ A área central da barra é “arrastável”: você pode arrastar a janela pelo
 | Ícone | Painel | Descrição |
 |-------|--------|-----------|
 | Pasta | **Explorador** | Árvore de arquivos da pasta aberta. |
-| Lupa | **Buscar** | Campo para buscar texto nos arquivos (funcionalidade em desenvolvimento). |
+| Lupa | **Buscar** | Busca textual em todos os arquivos do projeto. |
 | Três círculos | **Controle de Código** | Painel Git (em desenvolvimento). |
-| Quadrados | **Extensões** | Painel de extensões (em desenvolvimento). |
+| Quadrados | **Extensões** | Gerenciador de extensões (marketplace + local). |
 
 Clicar de novo no ícone do painel já visível **oculta ou exibe** a sidebar.
 

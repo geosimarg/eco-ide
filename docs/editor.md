@@ -26,6 +26,7 @@ A detecção é feita pela extensão do arquivo. Se quiser usar outra linguagem 
 ## Recursos do editor
 
 - **Números de linha** — à esquerda do código.
+- **Minimap** — visão minimapa do código à direita do editor.
 - **Realce da linha ativa** — a linha onde está o cursor fica levemente destacada.
 - **Dobramento de código (fold)** — gutter para expandir/recolher blocos (conforme suporte do CodeMirror para a linguagem).
 - **Correspondência de chaves** — chaves/parênteses correspondentes são destacados.
