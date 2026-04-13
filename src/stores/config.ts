@@ -2,44 +2,10 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { logger } from '@/utils/logger';
 import { useGlobalConfigStore } from './globalConfig';
+import { WorkspaceConfig } from '@/interfaces/workspace_config';
 
 const editorFolder = '.eco';
 const configFile = 'workspace.json';
-
-export interface SessionFile {
-    path: string;
-    language?: string;
-}
-
-export interface SessionGroup {
-    id: string;
-    files: SessionFile[];
-    activeFilePath?: string;
-}
-
-export interface SessionData {
-    groups: SessionGroup[];
-    activeGroupId: string;
-    expandedFolders: string[];
-}
-
-export interface EcoConfig {
-    // Hidden files
-    hidden_files?: string[];
-    hidden_folders?: string[];
-    
-    // Editor overrides
-    tabSize?: number;
-    wordWrap?: boolean;
-    minimap?: boolean;
-    lineNumbers?: number;
-}
-
-export interface WorkspaceConfig extends EcoConfig {
-    languageOverrides: Record<string, string>;
-    locale?: string;
-    session?: SessionData; // Session data from workspace file
-}
 
 export const useConfigStore = defineStore('config', () => {
     const workspacePath = ref<string | null>(null);

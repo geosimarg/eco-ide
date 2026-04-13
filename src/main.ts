@@ -8,11 +8,11 @@ const app = createApp(App);
 const pinia = createPinia();
 
 app.config.errorHandler = (err, _instance, info) => {
-  logger.error('Global Vue error:', err, info);
+  logger.error('Global Vue error: ' + String(err) + ' | Info: ' + String(info));
 };
 
 window.addEventListener('unhandledrejection', (event) => {
-  logger.error('Unhandled promise rejection:', event.reason);
+  logger.error('Unhandled promise rejection: ' + String(event.reason));
 });
 
 app.use(pinia);

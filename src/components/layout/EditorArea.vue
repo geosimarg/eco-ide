@@ -75,7 +75,7 @@ function handleEditorScroll(percent: number) {
             </svg>
           </button>
         </div>
-        <MarkdownPreview :content="previewContent" :scroll-percent="previewScrollPercent" />
+        <MarkdownPreview :content="previewContent || ''" :scroll-percent="previewScrollPercent" />
       </div>
     </div>
   </div>

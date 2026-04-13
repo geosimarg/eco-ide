@@ -1,37 +1,12 @@
-use anyhow::Result;
-use wasmtime::*;
-
 #[allow(dead_code)]
-pub struct ExtensionHost {
-    engine: Engine,
-}
+pub struct ExtensionHost;
 
 impl ExtensionHost {
-    pub fn new() -> Result<Self> {
-        let mut config = Config::new();
-        config.cranelift_opt_level(OptLevel::Speed);
-
-        let engine = Engine::new(&config)?;
-
-        Ok(Self { engine })
+    pub fn new() -> Self {
+        Self
     }
 
-    pub fn load_extension(&mut self, _path: &str) -> Result<()> {
-        /*
-        let module = Module::from_file(&self.engine, path)?;
-        let mut linker: Linker<WasiCtx> = Linker::new(&self.engine);
-        wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
-
-        let wasi = WasiCtxBuilder::new()
-            .inherit_stdio()
-            .build();
-
-        let mut store = Store::new(&self.engine, wasi);
-
-        let instance = linker.instantiate(&mut store, &module)?;
-
-        // Aqui buscaríamos funções exportadas, como `activate()`
-        */
+    pub fn load_extension(&mut self, _path: &str) -> Result<(), String> {
         Ok(())
     }
 }

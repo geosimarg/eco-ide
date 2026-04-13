@@ -18,7 +18,7 @@ use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use notify::{Watcher, RecommendedWatcher, RecursiveMode, Event, EventKind};
 
 mod extensions;
-use extensions::{ExtensionState, load_extension, discover_extensions, list_extensions, host::ExtensionHost};
+use extensions::{load_extension, discover_extensions, list_extensions};
 
 /// Estado global para file watching
 struct FileWatcherState {
@@ -407,6 +407,75 @@ fn event_kind_to_string(kind: &EventKind) -> String {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GitDiffResult {
+    pub original: String,
+    pub modified: String,
+}
+
+#[tauri::command]
+fn get_file_diff(path: String) -> Result<GitDiffResult, String> {
+    let file_path = Path::new(&path);
+    
+    if !file_path.exists() {
+        return Err(format!("Arquivo não existe: {}", path));
+    }
+    
+    let modified_content = fs::read_to_string(file_path)
+        .map_err(|e| format!("Erro ao ler arquivo: {}", e))?;
+    
+    let original_content = String::new();
+    
+    Ok(GitDiffResult {
+        original: original_content,
+        modified: modified_content,
+    })
+}
+
+#[tauri::command]
+fn run_git_command(args: Vec<String>, cwd: String) -> Result<String, String> {
+    let output = std::process::Command::new("git")
+        .args(&args)
+        .current_dir(&cwd)
+        .output()
+        .map_err(|e| format!("Erro ao executar git: {}", e))?;
+    
+    if output.status.success() {
+        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[tauri::command]
+fn run_git_command_with_stdin(args: Vec<String>, cwd: String, stdin_data: String) -> Result<String, String> {
+    use std::process::{Command, Stdio};
+    use std::io::Write;
+
+    let mut child = Command::new("git")
+        .args(&args)
+        .current_dir(&cwd)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("Erro ao executar git: {}", e))?;
+
+    if let Some(mut stdin_pipe) = child.stdin.take() {
+        stdin_pipe.write_all(stdin_data.as_bytes())
+            .map_err(|e| format!("Erro ao escrever stdin: {}", e))?;
+    }
+
+    let output = child.wait_with_output()
+        .map_err(|e| format!("Erro ao esperar git: {}", e))?;
+
+    if output.status.success() {
+        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
 #[tauri::command]
 fn start_file_watch(
     app_handle: tauri::AppHandle,
@@ -458,12 +527,66 @@ fn stop_file_watch(watcher_state: tauri::State<Arc<Mutex<FileWatcherState>>>) ->
     Ok(())
 }
 
+#[tauri::command]
+fn write_log(app_handle: tauri::AppHandle, level: String, context: String, message: String) -> Result<(), String> {
+    use std::io::Write;
+    
+    let log_dir = app_handle.path().app_log_dir().map_err(|e| e.to_string())?;
+    let logs_dir = log_dir.join("logs");
+    
+    if !logs_dir.exists() {
+        fs::create_dir_all(&logs_dir).map_err(|e| e.to_string())?;
+    }
+    
+    let now = chrono_local();
+    let log_file = logs_dir.join(format!("eco-{}.log", now));
+    
+    let timestamp = chrono_timestamp();
+    let log_line = format!("[{}] [{}] [{}] {}\n", timestamp, level.to_uppercase(), context, message);
+    
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&log_file)
+        .map_err(|e| e.to_string())?;
+    
+    file.write_all(log_line.as_bytes()).map_err(|e| e.to_string())?;
+    
+    Ok(())
+}
+
+fn chrono_local() -> String {
+    use std::time::SystemTime;
+    let now = SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap();
+    let secs = now.as_secs();
+    let days = secs / 86400;
+    let year_days = days / 365;
+    let year = 1970 + year_days;
+    let remaining_days = days % 365;
+    let month_days = remaining_days / 30;
+    let month = 1 + month_days;
+    let day = 1 + (remaining_days % 30);
+    format!("{:04}-{:02}-{:02}", year, month, day)
+}
+
+fn chrono_timestamp() -> String {
+    use std::time::SystemTime;
+    let now = SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap();
+    let secs = now.as_secs();
+    let hours = (secs % 86400) / 3600;
+    let mins = (secs % 3600) / 60;
+    let s = secs % 60;
+    format!("{:02}:{:02}:{:02}", hours, mins, s)
+}
+
 fn main() {
-    let extension_host = ExtensionHost::new().expect("Failed to create ExtensionHost");
     let watcher_state = Arc::new(Mutex::new(FileWatcherState { watcher: None }));
 
     tauri::Builder::default()
-        .manage(ExtensionState(std::sync::Mutex::new(extension_host)))
         .manage(watcher_state)
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
@@ -521,6 +644,10 @@ fn main() {
             send_http_request,
             start_file_watch,
             stop_file_watch,
+            get_file_diff,
+            run_git_command,
+            run_git_command_with_stdin,
+            write_log,
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao executar a aplicação Tauri");

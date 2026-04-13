@@ -3,65 +3,13 @@ import { ref, computed } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-dialog';
 import { useWorkspaceStore } from './workspace';
+import { Extension } from '@/interfaces/extension';
+import { MarketplaceCatalog } from '@/interfaces/marketplace_catalog';
+import { MarketplaceExtension } from '@/interfaces/marketplace_extension';
 
 const MARKETPLACE_URL = 'https://raw.githubusercontent.com/geosimarg/eco-ide-extensions/master/extensions.json';
 const STORAGE_KEY = 'eco-ide-extensions';
 const CACHE_KEY = 'eco-ide-extensions-cache';
-
-export interface Extension {
-    id: string;
-    name: string;
-    description?: string;
-    shortDescription?: string;
-    version: string;
-    author?: string;
-    repository?: string;
-    homepage?: string;
-    license?: string;
-    tags?: string[];
-    languages?: string[];
-    category?: string;
-    icon?: string;
-    screenshots?: string[];
-    readme?: string;
-    downloadUrl?: string;
-    downloadCount?: number;
-    rating?: number;
-    installed: boolean;
-    enabled: boolean;
-    path?: string;
-    downloadProgress?: number;
-    source?: 'marketplace' | 'local';
-}
-
-interface MarketplaceExtension {
-    id: string;
-    name: string;
-    description?: string;
-    shortDescription?: string;
-    version: string;
-    author?: string;
-    repository?: string;
-    homepage?: string;
-    license?: string;
-    tags?: string[];
-    languages?: string[];
-    category?: string;
-    icon?: string;
-    screenshots?: string[];
-    readme?: string;
-    downloadUrl?: string;
-    downloadCount?: number;
-    rating?: number;
-    installed?: boolean;
-}
-
-interface MarketplaceCatalog {
-    version: string;
-    lastUpdated: string;
-    extensions: MarketplaceExtension[];
-    categories: { id: string; name: string; description: string }[];
-}
 
 export const useExtensionStore = defineStore('extensions', () => {
     const marketplaceExtensions = ref<Extension[]>([]);
@@ -124,7 +72,7 @@ export const useExtensionStore = defineStore('extensions', () => {
 
     async function fetchMarketplaceCatalog(): Promise<MarketplaceCatalog | null> {
         isLoadingMarketplace.value = true;
-        
+
         try {
             const cached = await fetchFromCache();
             if (cached) {
@@ -136,11 +84,11 @@ export const useExtensionStore = defineStore('extensions', () => {
             if (!response.ok) {
                 throw new Error(`Failed to fetch: ${response.status}`);
             }
-            
+
             const data: MarketplaceCatalog = await response.json();
             saveToCache(data);
             applyInstalledState(data.extensions);
-            
+
             return data;
         } catch (err) {
             console.error('Error fetching marketplace:', err);
@@ -160,7 +108,7 @@ export const useExtensionStore = defineStore('extensions', () => {
             const installed = installedExtensions.value.find(
                 i => i.id === ext.id && i.source === 'marketplace'
             );
-            
+
             return {
                 ...ext,
                 installed: !!installed,
@@ -172,7 +120,7 @@ export const useExtensionStore = defineStore('extensions', () => {
 
     async function loadMarketplaceExtensions() {
         isLoading.value = true;
-        
+
         try {
             const catalog = await fetchMarketplaceCatalog();
             if (catalog) {
@@ -180,7 +128,7 @@ export const useExtensionStore = defineStore('extensions', () => {
                     const installed = installedExtensions.value.find(
                         i => i.id === ext.id
                     );
-                    
+
                     return {
                         ...ext,
                         installed: !!installed,
@@ -188,7 +136,7 @@ export const useExtensionStore = defineStore('extensions', () => {
                         source: 'marketplace' as const,
                     } as Extension;
                 });
-                
+
                 categories.value = catalog.categories;
             }
         } catch (err) {
@@ -211,18 +159,18 @@ export const useExtensionStore = defineStore('extensions', () => {
         }
 
         isLoading.value = true;
-        
+
         try {
             const extensionsPath = `${workspaceStore.workspacePath}/.eco/extensions`;
             const discovered = await invoke<any[]>('discover_extensions', {
                 extensionsPath
             });
-            
+
             localExtensions.value = discovered.map(ext => {
                 const installed = installedExtensions.value.find(
                     i => i.path === ext.path
                 );
-                
+
                 return {
                     id: ext.name.toLowerCase().replace(/\s+/g, '-'),
                     name: ext.name,
@@ -255,7 +203,7 @@ export const useExtensionStore = defineStore('extensions', () => {
                 const discovered = await invoke<any[]>('discover_extensions', {
                     extensionsPath: selected
                 });
-                
+
                 const newExts = discovered.map(ext => ({
                     id: ext.name.toLowerCase().replace(/\s+/g, '-'),
                     name: ext.name,
@@ -267,7 +215,7 @@ export const useExtensionStore = defineStore('extensions', () => {
                     path: ext.path,
                     source: 'local' as const,
                 }));
-                
+
                 const existingPaths = new Set(localExtensions.value.map(e => e.path));
                 for (const ext of newExts) {
                     if (!existingPaths.has(ext.path)) {
@@ -289,18 +237,18 @@ export const useExtensionStore = defineStore('extensions', () => {
             if (ext.path) {
                 await invoke('load_extension', { path: ext.path });
             }
-            
-            const newExt = { 
-                ...ext, 
-                installed: true, 
+
+            const newExt = {
+                ...ext,
+                installed: true,
                 enabled: true,
                 source: ext.source || 'local'
             };
-            
+
             if (!installedExtensions.value.find(e => e.id === ext.id)) {
                 installedExtensions.value.push(newExt);
             }
-            
+
             if (ext.source === 'marketplace') {
                 const idx = marketplaceExtensions.value.findIndex(e => e.id === ext.id);
                 if (idx !== -1) {
@@ -314,9 +262,9 @@ export const useExtensionStore = defineStore('extensions', () => {
                     localExtensions.value[idx].enabled = true;
                 }
             }
-            
+
             saveInstalledExtensions();
-            
+
             return { success: true };
         } catch (err) {
             console.error('Failed to install extension:', err);
@@ -328,7 +276,7 @@ export const useExtensionStore = defineStore('extensions', () => {
         installedExtensions.value = installedExtensions.value.filter(
             e => e.id !== ext.id
         );
-        
+
         if (ext.source === 'marketplace') {
             const idx = marketplaceExtensions.value.findIndex(e => e.id === ext.id);
             if (idx !== -1) {
@@ -342,15 +290,15 @@ export const useExtensionStore = defineStore('extensions', () => {
                 localExtensions.value[idx].enabled = false;
             }
         }
-        
+
         saveInstalledExtensions();
-        
+
         return { success: true };
     }
 
     async function toggleExtension(ext: Extension) {
         const isCurrentlyEnabled = ext.enabled;
-        
+
         if (isCurrentlyEnabled) {
             const idx = installedExtensions.value.findIndex(e => e.id === ext.id);
             if (idx !== -1) {
@@ -369,7 +317,7 @@ export const useExtensionStore = defineStore('extensions', () => {
                 }
             }
         }
-        
+
         if (ext.source === 'marketplace') {
             const idx = marketplaceExtensions.value.findIndex(e => e.id === ext.id);
             if (idx !== -1) {
@@ -381,7 +329,7 @@ export const useExtensionStore = defineStore('extensions', () => {
                 localExtensions.value[idx].enabled = !isCurrentlyEnabled;
             }
         }
-        
+
         saveInstalledExtensions();
     }
 
@@ -391,11 +339,11 @@ export const useExtensionStore = defineStore('extensions', () => {
 
     const filteredMarketplaceExtensions = computed(() => {
         let result = marketplaceExtensions.value;
-        
+
         if (selectedCategory.value) {
             result = result.filter(e => e.category === selectedCategory.value);
         }
-        
+
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase();
             result = result.filter(e =>
@@ -404,13 +352,13 @@ export const useExtensionStore = defineStore('extensions', () => {
                 e.tags?.some(t => t.toLowerCase().includes(query))
             );
         }
-        
+
         return result;
     });
 
     const filteredLocalExtensions = computed(() => {
         let result = localExtensions.value;
-        
+
         if (searchQuery.value) {
             const query = searchQuery.value.toLowerCase();
             result = result.filter(e =>
@@ -418,11 +366,11 @@ export const useExtensionStore = defineStore('extensions', () => {
                 e.description?.toLowerCase().includes(query)
             );
         }
-        
+
         return result;
     });
 
-    const enabledExtensions = computed(() => 
+    const enabledExtensions = computed(() =>
         installedExtensions.value.filter(e => e.enabled)
     );
 

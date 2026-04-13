@@ -1,30 +1,13 @@
+import { HttpRequest } from '@/interfaces/http_request';
+import { HttpResponse } from '@/interfaces/http_response';
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
-export interface HttpHeader {
-  key: string;
-  value: string;
-  enabled: boolean;
-}
 
-export interface HttpRequest {
-  id: string;
-  name: string;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
-  url: string;
-  headers: HttpHeader[];
-  body: string;
-  contentType: 'none' | 'json' | 'form' | 'text' | 'xml';
-}
 
-export interface HttpResponse {
-  status: number;
-  statusText: string;
-  headers: Record<string, string>;
-  body: string;
-  time: number;
-  size: number;
-}
+
+
+
 
 export const useHttpClientStore = defineStore('http', () => {
   const requests = ref<HttpRequest[]>([]);
@@ -115,7 +98,7 @@ export const useHttpClientStore = defineStore('http', () => {
       }
 
       const { invoke } = await import('@tauri-apps/api/core');
-      
+
       const result = await invoke<{
         status: number;
         status_text: string;

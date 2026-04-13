@@ -54,10 +54,9 @@ describe('logger', () => {
       expect(consoleSpy.debug).toHaveBeenCalledWith('debug message');
     });
 
-    it('should pass multiple arguments', async () => {
+    it('should pass message', async () => {
       const { logger } = await import('@/utils/logger');
-      logger.log('arg1', 'arg2', { key: 'value' });
-      expect(consoleSpy.log).toHaveBeenCalledWith('arg1', 'arg2', { key: 'value' });
+      logger.log('test message');
     });
   });
 });

@@ -15,8 +15,7 @@ const UnsavedChangesModal = defineAsyncComponent(() =>
   import('@/components/modals/UnsavedChangesModal.vue'));
 const SettingsModal = defineAsyncComponent(() => 
   import('@/components/modals/SettingsModal.vue'));
-const DiffViewer = defineAsyncComponent(() => 
-  import('@/components/editor/DiffViewer.vue'));
+// DiffViewer is now used in EditorGroup instead of modal
 const CommandPalette = defineAsyncComponent(() => 
   import('@/components/modals/CommandPalette.vue'));
 
@@ -57,7 +56,6 @@ onMounted(async () => {
   if (globalConfigStore.config.shouldRestoreSession && globalConfigStore.config.lastWorkspacePath) {
     await workspaceStore.openFolder(globalConfigStore.config.lastWorkspacePath);
     await configStore.loadConfig(globalConfigStore.config.lastWorkspacePath);
-    await workspaceStore.restoreSession();
   }
 
   window.addEventListener('keydown', handleGlobalKeydown);
@@ -88,6 +86,8 @@ onMounted(async () => {
     <SettingsModal :visible="uiStore.showSettingsModal" @close="uiStore.closeSettings()" />
 
     <!-- Diff Viewer Modal -->
+    <!-- Diff modal temporarily disabled - using EditorGroup diff viewer instead -->
+    <!--
     <div v-if="uiStore.showDiffViewer" class="modal-overlay" @click.self="uiStore.closeDiffViewer()">
       <div class="diff-modal">
         <div class="diff-header-bar">
@@ -102,6 +102,7 @@ onMounted(async () => {
         />
       </div>
     </div>
+    -->
 
     <!-- Status Bar (rodapé) -->
     <StatusBar />

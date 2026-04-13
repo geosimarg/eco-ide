@@ -68,6 +68,31 @@
         "extensions": "Extensions",
         "git": "Source Control"
     },
+    "gitPanel": {
+        "prepared": "Staged",
+        "changes": "Changes",
+        "noChanges": "No changes detected",
+        "noChangesDesc": "Your working tree is clean",
+        "notGitRepo": "Not a Git repository",
+        "notGitRepoDesc": "Open a folder with a Git repository to use source control",
+        "refresh": "Refresh",
+        "commit": "Commit",
+        "commitMessage": "Commit message...",
+        "stageAll": "Stage all",
+        "discardAll": "Discard all",
+        "stageFile": "Stage file",
+        "discardFile": "Discard changes",
+        "unstageFile": "Unstage",
+        "accept": "Stage",
+        "reject": "Discard",
+        "previousChange": "Previous change",
+        "nextChange": "Next change",
+        "previousFile": "Previous file",
+        "nextFile": "Next file",
+        "acceptFile": "Accept file",
+        "discardFileChanges": "Discard file changes",
+        "unstageAll": "Unstage all"
+    },
     "explorer": {
         "new_file": "New File",
         "new_folder": "New Folder",
@@ -136,7 +161,7 @@
         "select_a_folder": "Select a folder",
         "recent_projects": "Recent Projects"
     },
-    "diff": {
+"diff": {
         "title": "Compare Files",
         "original": "Original",
         "modified": "Modified",
@@ -146,8 +171,16 @@
         "comparing": "Comparing files...",
         "no_differences": "Files are identical",
         "compare_with_active": "Compare with Active File",
-        "no_active_file": "No active file in editor"
-    },
+        "no_active_file": "No active file in editor",
+        "acceptAll": "Accept All",
+        "rejectAll": "Reject All",
+        "noChanges": "No changes to display",
+        "linesHidden": "lines hidden",
+        "expandContext": "Expand context",
+        "changes": "changes",
+        "additions": "additions",
+        "deletions": "deletions"
+      },
     "http": {
         "title": "HTTP Client",
         "requests": "Requests",

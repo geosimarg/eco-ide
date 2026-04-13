@@ -1,42 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { logger } from '@/utils/logger';
+import { GlobalConfig } from '@/interfaces/global_config';
 
 const GLOBAL_CONFIG_FILE = 'global.json';
-
-export interface GlobalConfig {
-    locale: string;
-    lastWorkspacePath?: string;
-    shouldRestoreSession?: boolean;
-    hidden_files?: string[];
-    hidden_folders?: string[];
-    recentWorkspaces?: RecentWorkspace[];
-    
-    // Appearance
-    theme?: 'dark' | 'light';
-    fontSize?: number;
-    fontFamily?: string;
-    
-    // Editor
-    tabSize?: number;
-    wordWrap?: boolean;
-    minimap?: boolean;
-    lineNumbers?: boolean;
-    
-    // Auto-save
-    autoSave?: boolean;
-    autoSaveInterval?: number; // seconds
-    
-    // Behavior
-    confirmExit?: boolean;
-    restoreSession?: boolean;
-}
-
-export interface RecentWorkspace {
-    path: string;
-    name: string;
-    lastOpened: string;
-}
 
 const MAX_RECENT_WORKSPACES = 10;
 
@@ -63,7 +30,10 @@ export const useGlobalConfigStore = defineStore('globalConfig', () => {
         } catch (e) {
             logger.log('Nenhuma configuração global encontrada ou erro ao ler:', e);
 
-            config.value = { locale: 'pt-BR' };
+            config.value = {
+                locale: 'pt-BR',
+                shouldRestoreSession: false
+            };
             await saveConfig();
         }
     }
@@ -108,7 +78,7 @@ export const useGlobalConfigStore = defineStore('globalConfig', () => {
         if (!config.value.recentWorkspaces) {
             config.value.recentWorkspaces = [];
         }
-        
+
         const existing = config.value.recentWorkspaces.findIndex(w => w.path === path);
         if (existing !== -1) {
             config.value.recentWorkspaces.splice(existing, 1);
@@ -133,7 +103,7 @@ export const useGlobalConfigStore = defineStore('globalConfig', () => {
 
     function removeRecentWorkspace(path: string) {
         if (!config.value.recentWorkspaces) return;
-        
+
         config.value.recentWorkspaces = config.value.recentWorkspaces.filter(w => w.path !== path);
         saveConfig();
     }

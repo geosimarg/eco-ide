@@ -73,6 +73,31 @@
         "extensions": "Extensões",
         "git": "Controle de Código"
     },
+    "gitPanel": {
+        "prepared": "Staged",
+        "changes": "Alterações",
+        "noChanges": "Nenhuma alteração detectada",
+        "noChangesDesc": "Seu working tree está limpo",
+        "notGitRepo": "Não é um repositório Git",
+        "notGitRepoDesc": "Abra uma pasta com repositório Git para usar o controle de versão",
+        "refresh": "Atualizar",
+        "commit": "Commit",
+        "commitMessage": "Mensagem do commit...",
+        "stageAll": "Preparar todas",
+        "discardAll": "Descartar todas",
+        "stageFile": "Preparar arquivo",
+        "discardFile": "Descartar alterações",
+        "unstageFile": "Remover do stage",
+        "accept": "Stage",
+        "reject": "Descartar",
+        "previousChange": "Alteração anterior",
+        "nextChange": "Próxima alteração",
+        "previousFile": "Arquivo anterior",
+        "nextFile": "Próximo arquivo",
+        "acceptFile": "Aceitar arquivo",
+        "discardFileChanges": "Descartar alterações do arquivo",
+        "unstageAll": "Remover todas do stage"
+    },
     "explorer": {
         "new_file": "Novo Arquivo",
         "new_folder": "Nova Pasta",
@@ -141,7 +166,7 @@
         "select_a_folder": "Selecione uma pasta",
         "recent_projects": "Projetos Recentes"
     },
-    "diff": {
+"diff": {
         "title": "Comparar Arquivos",
         "original": "Original",
         "modified": "Modificado",
@@ -151,8 +176,16 @@
         "comparing": "Comparando arquivos...",
         "no_differences": "Os arquivos são idênticos",
         "compare_with_active": "Comparar com Arquivo Ativo",
-        "no_active_file": "Nenhum arquivo ativo no editor"
-    },
+        "no_active_file": "Nenhum arquivo ativo no editor",
+        "acceptAll": "Aceitar Todas",
+        "rejectAll": "Rejeitar Todas",
+        "noChanges": "Nenhuma alteração para mostrar",
+        "linesHidden": "linhas ocultas",
+        "expandContext": "Expandir contexto",
+        "changes": "alterações",
+        "additions": "adições",
+        "deletions": "remoções"
+      },
     "http": {
         "title": "Cliente HTTP",
         "requests": "Requisições",

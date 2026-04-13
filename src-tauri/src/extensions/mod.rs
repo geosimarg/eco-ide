@@ -3,12 +3,22 @@ pub mod host;
 use std::path::Path;
 use std::sync::Mutex;
 use tauri::State;
-use host::ExtensionHost;
 use serde::{Deserialize, Serialize};
 
-pub struct ExtensionState(pub Mutex<ExtensionHost>);
+pub struct ExtensionState(pub Mutex<StubExtensionHost>);
 
-/// Manifesto de extensão (eco-ext.json)
+pub struct StubExtensionHost;
+
+impl StubExtensionHost {
+    pub fn new() -> Self {
+        Self
+    }
+    
+    pub fn load_extension(&mut self, _path: &str) -> Result<(), String> {
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExtensionManifest {
     pub name: String,

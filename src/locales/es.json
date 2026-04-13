@@ -68,6 +68,31 @@
         "extensions": "Extensiones",
         "git": "Control de Código"
     },
+    "gitPanel": {
+        "prepared": "Staged",
+        "changes": "Cambios",
+        "noChanges": "No se detectaron cambios",
+        "noChangesDesc": "Su working tree está limpia",
+        "notGitRepo": "No es un repositorio Git",
+        "notGitRepoDesc": "Abra una carpeta con repositorio Git para usar el control de versiones",
+        "refresh": "Actualizar",
+        "commit": "Commit",
+        "commitMessage": "Mensaje del commit...",
+        "stageAll": "Preparar todos",
+        "discardAll": "Descartar todos",
+        "stageFile": "Preparar archivo",
+        "discardFile": "Descartar cambios",
+        "unstageFile": "Quitar del stage",
+        "accept": "Stage",
+        "reject": "Descartar",
+        "previousChange": "Cambio anterior",
+        "nextChange": "Siguiente cambio",
+        "previousFile": "Archivo anterior",
+        "nextFile": "Siguiente archivo",
+        "acceptFile": "Aceptar archivo",
+        "discardFileChanges": "Descartar cambios del archivo",
+        "unstageAll": "Quitar todos del stage"
+    },
     "explorer": {
         "new_file": "Nuevo Archivo",
         "new_folder": "Nueva Carpeta",
@@ -136,7 +161,7 @@
         "select_a_folder": "Seleccione una carpeta",
         "recent_projects": "Proyectos Recientes"
     },
-    "diff": {
+"diff": {
         "title": "Comparar Archivos",
         "original": "Original",
         "modified": "Modificado",
@@ -146,8 +171,16 @@
         "comparing": "Comparando archivos...",
         "no_differences": "Los archivos son idénticos",
         "compare_with_active": "Comparar con Archivo Activo",
-        "no_active_file": "No hay archivo activo en el editor"
-    },
+        "no_active_file": "No hay archivo activo en el editor",
+        "acceptAll": "Aceptar Todo",
+        "rejectAll": "Rechazar Todo",
+        "noChanges": "No hay cambios para mostrar",
+        "linesHidden": "líneas ocultas",
+        "expandContext": "Expandir contexto",
+        "changes": "cambios",
+        "additions": "adiciones",
+        "deletions": "eliminaciones"
+      },
     "http": {
         "title": "Cliente HTTP",
         "requests": "Solicitudes",

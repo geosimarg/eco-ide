@@ -3,33 +3,9 @@ import { ref, computed } from 'vue';
 import { logger } from '@/utils/logger';
 import { useConfigStore } from './config';
 import { useGlobalConfigStore } from './globalConfig';
-
-export interface OpenFile {
-    id: string;
-    name: string;
-    path: string;
-    content: string;
-    modified: boolean;
-    language: string;
-    pinned?: boolean;
-    initialLine?: number;
-    initialColumn?: number;
-}
-
-export interface FileEntry {
-    name: string;
-    path: string;
-    isDirectory: boolean;
-    children?: FileEntry[];
-    expanded?: boolean;
-}
-
-export interface EditorGroup {
-    id: string;
-    files: OpenFile[];
-    activeFileId: string | null;
-    direction?: 'horizontal' | 'vertical';
-}
+import { FileEntry } from '@/interfaces/file_entry';
+import { EditorGroup } from '@/interfaces/editor_group';
+import { OpenFile } from '@/interfaces/open_file';
 
 export const useWorkspaceStore = defineStore('workspace', () => {
     // Estado
@@ -66,6 +42,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
     // Actions
     function setWorkspace(path: string, name: string) {
+        logger.info('[setWorkspace] Iniciando workspace: ' + name);
         workspacePath.value = path;
         workspaceName.value = name;
 
@@ -81,35 +58,86 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     }
 
     let fileWatchStarted = false;
+    let refreshDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const IGNORE_PATTERNS = [
+        '.git',
+        'node_modules',
+        'eco-ide-extensions',
+        'target',
+        'dist',
+        '.nuxt',
+        '.next',
+        '__pycache__',
+        '.pytest_cache',
+        'venv',
+        '.venv',
+        'coverage',
+        '.turbo',
+    ];
+
+    function shouldIgnorePath(path: string): boolean {
+        if (!workspacePath.value) return false;
+        const relativePath = path.replace(workspacePath.value, '');
+        const parts = relativePath.split('/');
+        for (const part of parts) {
+            if (IGNORE_PATTERNS.includes(part)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     async function startFileWatch(path: string) {
         if (fileWatchStarted) return;
         fileWatchStarted = true;
-        
+        logger.info('[startFileWatch] Iniciando monitoramento: ' + path);
+
         try {
             const { invoke } = await import('@tauri-apps/api/core');
             await invoke('start_file_watch', { path });
-            
+
             const { listen } = await import('@tauri-apps/api/event');
             await listen<{ path: string; kind: string }>('file-change', (event) => {
                 const changedPath = event.payload.path;
-                if (workspacePath.value && changedPath.startsWith(workspacePath.value)) {
-                    refreshFileTree();
+
+                if (!workspacePath.value || !changedPath.startsWith(workspacePath.value)) {
+                    return;
                 }
+
+                if (changedPath === workspacePath.value) {
+                    return;
+                }
+
+                if (shouldIgnorePath(changedPath)) {
+                    return;
+                }
+
+                logger.info('[file-change] Arquivo alterado: ' + changedPath);
+
+                if (refreshDebounceTimer) {
+                    clearTimeout(refreshDebounceTimer);
+                }
+
+                refreshDebounceTimer = setTimeout(() => {
+                    refreshFileTree();
+                }, 250);
             });
         } catch (e) {
-            logger.error('File watch error:', e);
+            logger.error('[startFileWatch] Erro:', String(e));
             fileWatchStarted = false;
         }
     }
 
     async function refreshFileTree() {
         if (!workspacePath.value) return;
-        
+
+        logger.info('[refreshFileTree] Atualizando arvore de arquivos');
         try {
             const { invoke } = await import('@tauri-apps/api/core');
             const entries = await invoke<any[]>('list_directory', { path: workspacePath.value });
             files.value = entries;
-            
+
             for (const entry of files.value) {
                 if (entry.isDirectory && entry.expanded) {
                     loadChildren(entry);
@@ -122,7 +150,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
     async function loadChildren(entry: any) {
         if (!entry.path) return;
-        
+
         try {
             const { invoke } = await import('@tauri-apps/api/core');
             const children = await invoke<any[]>('list_directory', { path: entry.path });
@@ -136,27 +164,27 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         files.value = entries;
     }
 
-    function openFile(entry: { name: string; path: string; content: string; initialLine?: number; initialColumn?: number }) {
-        // Verificar se já está aberto em QUALQUER grupo
-        for (const group of groups.value) {
-            const existing = group.files.find(f => f.path === entry.path);
-            if (existing) {
-                if (entry.initialLine !== undefined) {
-                    existing.initialLine = entry.initialLine;
-                    existing.initialColumn = entry.initialColumn;
+    function openFile(entry: { name: string; path: string; content?: string; initialLine?: number; initialColumn?: number; isDiff?: boolean; originalContent?: string; diffLabel?: string; diffMode?: 'staged' | 'unstaged' }) {
+        logger.info('[openFile] Abrindo arquivo: ' + entry.path);
+        if (!entry.isDiff) {
+            for (const group of groups.value) {
+                const existing = group.files.find(f => f.path === entry.path);
+                if (existing) {
+                    if (entry.initialLine !== undefined) {
+                        existing.initialLine = entry.initialLine;
+                        existing.initialColumn = entry.initialColumn;
+                    }
+                    activeGroupId.value = group.id;
+                    group.activeFileId = existing.id;
+                    activeFileId.value = existing.id;
+                    return existing.id;
                 }
-                // Ativar grupo e arquivo
-                activeGroupId.value = group.id;
-                group.activeFileId = existing.id;
-                activeFileId.value = existing.id; // Sync
-                return existing.id;
             }
         }
 
         const configStore = useConfigStore();
         const languageOverride = configStore.getLanguageForFile(entry.path);
 
-        // Criar novo arquivo aberto
         const newFile: OpenFile = {
             id: crypto.randomUUID(),
             name: entry.name,
@@ -166,20 +194,24 @@ export const useWorkspaceStore = defineStore('workspace', () => {
             language: languageOverride || getLanguageFromPath(entry.path),
             initialLine: entry.initialLine,
             initialColumn: entry.initialColumn,
+            isDiff: entry.isDiff,
+            originalContent: entry.originalContent,
+            diffLabel: entry.diffLabel,
+            diffMode: entry.diffMode,
         };
 
-        // Adicionar ao grupo ativo
         const targetGroup = activeGroup.value;
         targetGroup.files.push(newFile);
         targetGroup.activeFileId = newFile.id;
 
-        // Sync deprecated state
         activeFileId.value = newFile.id;
+        logger.info('[openFile] Arquivo aberto: ' + newFile.id);
 
         return newFile.id;
     }
 
     function closeFile(id: string) {
+        logger.info('[closeFile] Fechando arquivo: ' + id);
         for (const group of groups.value) {
             const index = group.files.findIndex(f => f.id === id);
             if (index !== -1) {
@@ -589,9 +621,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
     async function restoreSessionData(session: any) {
         if (!session) return;
-        const { invoke } = await import('@tauri-apps/api/core');
 
-        // Limpar estado atual de grupos (mas manter workspacePath se já setado)
         groups.value = [];
 
         for (const sessionGroup of session.groups) {
@@ -602,31 +632,22 @@ export const useWorkspaceStore = defineStore('workspace', () => {
             };
 
             for (const sessionFile of sessionGroup.files) {
-                try {
-                    // Verificar se arquivo existe antes de tentar ler
-                    // O read_file do backend já retorna erro se não existir
-                    const content = await invoke<string>('read_file', { path: sessionFile.path });
+                const separator = navigator.userAgent.includes('Windows') ? '\\' : '/';
+                const name = sessionFile.path.split(separator).pop() || 'Arquivo';
 
-                    // Extrair nome
-                    const separator = navigator.userAgent.includes('Windows') ? '\\' : '/';
-                    const name = sessionFile.path.split(separator).pop() || 'Arquivo';
+                const newFile: OpenFile = {
+                    id: crypto.randomUUID(),
+                    name,
+                    path: sessionFile.path,
+                    content: undefined,
+                    modified: false,
+                    language: sessionFile.language || getLanguageFromPath(sessionFile.path)
+                };
 
-                    const newFile: OpenFile = {
-                        id: crypto.randomUUID(),
-                        name,
-                        path: sessionFile.path,
-                        content,
-                        modified: false,
-                        language: sessionFile.language || getLanguageFromPath(sessionFile.path)
-                    };
+                newGroup.files.push(newFile);
 
-                    newGroup.files.push(newFile);
-
-                    if (sessionFile.path === sessionGroup.activeFilePath) {
-                        newGroup.activeFileId = newFile.id;
-                    }
-                } catch (e) {
-                    logger.error('Erro ao restaurar arquivo:', sessionFile.path, e);
+                if (sessionFile.path === sessionGroup.activeFilePath) {
+                    newGroup.activeFileId = newFile.id;
                 }
             }
 
@@ -762,7 +783,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         activeGroupId.value = 'group-1';
         activeFileId.value = null;
     }
-    
+
     function toggleFilePinned(id: string) {
         for (const group of groups.value) {
             const file = group.files.find(f => f.id === id);
@@ -772,7 +793,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
             }
         }
     }
-    
+
     function closeOtherFiles(id: string) {
         for (const group of groups.value) {
             const filesToClose = group.files.filter(f => f.id !== id && !f.pinned).map(f => f.id);
@@ -781,7 +802,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
             }
         }
     }
-    
+
     function closeSavedFiles() {
         for (const group of groups.value) {
             const filesToClose = group.files.filter(f => !f.modified && !f.pinned).map(f => f.id);
@@ -790,26 +811,26 @@ export const useWorkspaceStore = defineStore('workspace', () => {
             }
         }
     }
-    
+
     function splitEditor(direction: 'vertical' | 'horizontal') {
         const currentActive = activeFileId.value;
         if (!currentActive) return;
-        
+
         let fileToMove: OpenFile | undefined;
         for (const group of groups.value) {
             fileToMove = group.files.find(f => f.id === currentActive);
             if (fileToMove) break;
         }
-        
+
         if (!fileToMove) return;
-        
+
         const newGroup: EditorGroup = {
             id: `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             files: [],
             activeFileId: null,
             direction: direction,
         };
-        
+
         for (const group of groups.value) {
             const index = group.files.findIndex(f => f.id === currentActive);
             if (index !== -1) {
